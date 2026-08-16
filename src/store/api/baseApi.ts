@@ -1,8 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import Cookies from 'js-cookie';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const rawUrl =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://task-management-backend-d5pm.onrender.com';
+const API_BASE_URL = rawUrl.endsWith('/api')
+  ? rawUrl
+  : `${rawUrl.replace(/\/$/, '')}/api`;
 
 export const baseApi = createApi({
   reducerPath: 'api',

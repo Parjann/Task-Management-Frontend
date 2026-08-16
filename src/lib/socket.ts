@@ -6,7 +6,8 @@ let socket: Socket | null = null;
 export const getSocket = (): Socket => {
   if (!socket) {
     const SOCKET_URL =
-      process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+      process.env.NEXT_PUBLIC_SOCKET_URL ||
+      'https://task-management-backend-d5pm.onrender.com';
     const token = Cookies.get('accessToken');
 
     socket = io(SOCKET_URL, {

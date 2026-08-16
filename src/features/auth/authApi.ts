@@ -44,6 +44,23 @@ export const authApi = baseApi.injectEndpoints({
       invalidatesTags: ['Auth'],
     }),
 
+    googleLogin: builder.mutation<LoginResponse, { idToken: string }>({
+      query: (body) => ({
+        url: '/auth/google',
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setCredentials(data));
+        } catch {
+          // Handled by component
+        }
+      },
+      invalidatesTags: ['Auth'],
+    }),
+
     guestLogin: builder.mutation<LoginResponse, GuestLoginDto | void>({
       query: (body) => ({
         url: '/auth/guest',
@@ -79,6 +96,7 @@ export const authApi = baseApi.injectEndpoints({
 export const {
   useRegisterMutation,
   useLoginMutation,
+  useGoogleLoginMutation,
   useGuestLoginMutation,
   useGetProfileQuery,
   useLogoutUserMutation,
