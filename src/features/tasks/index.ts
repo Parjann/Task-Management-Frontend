@@ -6,3 +6,6 @@ export * from './components/kanban-column';
 export * from './components/task-card';
 export * from './components/task-header';
 export * from './components/create-task-modal';
+export * from './components/fields-popover';
+export * from './components/task-list-view';
+export * from './components/priority-badge';

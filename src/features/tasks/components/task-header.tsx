@@ -1,49 +1,145 @@
 'use client';
 
-import React from 'react';
-import { Search, Columns, Filter, Plus } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Columns, Filter, Plus, X } from 'lucide-react';
+import {
+  FieldsPopover,
+  ViewMode,
+  VisibleFields,
+} from './fields-popover';
 
 interface TaskHeaderProps {
   onAddTask?: () => void;
-  onSearchClick?: () => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
   onFilterClick?: () => void;
-  onFieldsClick?: () => void;
+  isFieldsOpen: boolean;
+  onToggleFields: () => void;
+  onCloseFields: () => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  visibleFields: VisibleFields;
+  onToggleField: (key: keyof VisibleFields) => void;
 }
 
 export function TaskHeader({
   onAddTask,
-  onSearchClick,
+  searchQuery,
+  onSearchChange,
   onFilterClick,
-  onFieldsClick,
+  isFieldsOpen,
+  onToggleFields,
+  onCloseFields,
+  viewMode,
+  onViewModeChange,
+  visibleFields,
+  onToggleField,
 }: TaskHeaderProps) {
+  const [isSearchExpanded, setIsSearchExpanded] = useState(
+    Boolean(searchQuery),
+  );
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut listener (Cmd+F / Ctrl+F)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        setIsSearchExpanded(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+      if (e.key === 'Escape' && isSearchExpanded) {
+        if (!searchQuery) {
+          setIsSearchExpanded(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchExpanded, searchQuery]);
+
+  const handleOpenSearch = () => {
+    setIsSearchExpanded(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const handleClearSearch = () => {
+    onSearchChange('');
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
       {/* Title */}
       <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
         Tasks
       </h1>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Search Button */}
-        <button
-          type="button"
-          onClick={onSearchClick}
-          className="p-2 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827] transition-colors shadow-none"
-          title="Search Tasks"
-        >
-          <Search className="w-4 h-4" />
-        </button>
+      <div className="flex items-center gap-2 flex-wrap relative">
+        {/* Search Input Bar / Icon */}
+        {isSearchExpanded ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white w-60 sm:w-72 md:w-80 shadow-2xs focus-within:ring-2 focus-within:ring-[#7C3AED]/20 focus-within:border-[#7C3AED] transition-all">
+            <Search className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full text-sm text-[#111827] placeholder:text-[#9CA3AF] bg-transparent focus:outline-none"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="text-[#9CA3AF] hover:text-[#111827] p-0.5 rounded-md transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-[#9CA3AF] bg-[#F9FAFB] border border-[#E5E7EB] rounded-md">
+                ⌘F
+              </kbd>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleOpenSearch}
+            className="p-2 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827] transition-colors shadow-none"
+            title="Search Tasks (⌘F)"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+        )}
 
-        {/* Fields Button */}
-        <button
-          type="button"
-          onClick={onFieldsClick}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#374151] hover:text-[#111827] text-sm font-medium transition-colors shadow-none"
-        >
-          <Columns className="w-4 h-4 text-[#6B7280]" />
-          <span>Fields</span>
-        </button>
+        {/* Fields Button with Anchored Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onToggleFields}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shadow-none ${
+              isFieldsOpen
+                ? 'border-[#18181B] bg-[#F9FAFB] text-[#111827]'
+                : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#374151] hover:text-[#111827]'
+            }`}
+          >
+            <Columns className="w-4 h-4 text-[#6B7280]" />
+            <span>Fields</span>
+          </button>
+
+          {/* Popover Dropdown matching Figma design */}
+          <FieldsPopover
+            isOpen={isFieldsOpen}
+            onClose={onCloseFields}
+            viewMode={viewMode}
+            onViewModeChange={onViewModeChange}
+            visibleFields={visibleFields}
+            onToggleField={onToggleField}
+          />
+        </div>
 
         {/* Filter Button */}
         <button

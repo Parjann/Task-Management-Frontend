@@ -4,11 +4,13 @@ import React from 'react';
 import { GripVertical, Plus, MoreHorizontal } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { TaskCard } from './task-card';
+import { VisibleFields } from './fields-popover';
 
 interface KanbanColumnProps {
   id: TaskStatus;
   title: string;
   tasks: Task[];
+  visibleFields?: VisibleFields;
   onAddTask?: (status: TaskStatus) => void;
 }
 
@@ -16,6 +18,7 @@ export function KanbanColumn({
   id,
   title,
   tasks,
+  visibleFields,
   onAddTask,
 }: KanbanColumnProps) {
   return (
@@ -49,7 +52,7 @@ export function KanbanColumn({
       {/* Cards List */}
       <div className="space-y-3 overflow-y-auto flex-1 pr-0.5 pb-2">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} visibleFields={visibleFields} />
         ))}
       </div>
 
