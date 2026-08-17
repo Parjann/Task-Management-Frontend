@@ -29,42 +29,42 @@ export function LoginView() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-white dark:bg-neutral-950">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-white select-none">
       {/* Brand Header */}
-      <div className="flex items-center gap-2.5 mb-8">
-        <div className="w-8 h-8 rounded-lg bg-[#5B21B6] dark:bg-[#6D28D9] flex items-center justify-center shadow-sm">
-          {/* Pyramid / Delta Logo */}
+      <div className="flex items-center gap-2.5 mb-7">
+        <div className="w-[30px] h-[30px] rounded-lg bg-[#7C3AED] flex items-center justify-center shadow-sm">
+          {/* Stylized Pyramid Logo */}
           <svg
             className="w-4 h-4 text-white"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
             <path d="M12 2L2 22h20L12 2z" fill="white" stroke="none" />
-            <path d="M12 7L6 19h12L12 7z" fill="#5B21B6" stroke="none" />
+            <path d="M12 7.5L6.5 19h11L12 7.5z" fill="#7C3AED" stroke="none" />
           </svg>
         </div>
-        <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
+        <span className="text-[20px] font-bold tracking-tight text-[#0F172A] font-sans">
           Pyramid
         </span>
       </div>
 
       {/* Main Auth Card */}
-      <div className="w-full max-w-[420px] bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 rounded-3xl p-8 sm:p-10 shadow-sm">
+      <div className="w-full max-w-[430px] bg-white border border-[#E5E7EB] rounded-[28px] px-8 py-9 sm:px-10 sm:py-10 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
         <div className="text-center mb-7">
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+          <h1 className="text-[24px] sm:text-[26px] font-bold tracking-tight text-[#111827]">
             Let&apos;s get back on track
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
+          <p className="text-[14px] text-[#6B7280] mt-1.5 leading-normal">
             Enter your email below to login to your account.
           </p>
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs text-center">
+          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs text-center">
             {errorMsg}
           </div>
         )}
@@ -75,12 +75,14 @@ export function LoginView() {
             type="button"
             disabled={isGuestLoading}
             onClick={handleGuestLogin}
-            className="w-full flex items-center justify-center py-3.5 px-4 rounded-full bg-[#18181B] hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 font-medium text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center py-3.5 px-6 rounded-full bg-[#18181B] hover:bg-[#09090B] text-white font-medium text-[14px] transition-all duration-150 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isGuestLoading ? (
-              <div className="w-4 h-4 border-2 border-white dark:border-neutral-900 border-t-transparent rounded-full animate-spin mr-2" />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
             ) : null}
-            <span>{isGuestLoading ? 'Creating session...' : 'Continue as Guest'}</span>
+            <span>
+              {isGuestLoading ? 'Creating session...' : 'Continue as Guest'}
+            </span>
           </button>
 
           {/* Login with Google Button */}
@@ -89,18 +91,18 @@ export function LoginView() {
       </div>
 
       {/* Footer Legal Terms */}
-      <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center max-w-[320px] mt-7 leading-relaxed">
+      <p className="text-[12px] text-[#9CA3AF] text-center max-w-[290px] mt-6 leading-relaxed">
         By clicking continue, you agree to our{' '}
         <Link
           href="#"
-          className="underline underline-offset-2 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+          className="underline underline-offset-2 hover:text-[#4B5563] transition-colors"
         >
           Terms of Service
         </Link>{' '}
         and{' '}
         <Link
           href="#"
-          className="underline underline-offset-2 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+          className="underline underline-offset-2 hover:text-[#4B5563] transition-colors"
         >
           Privacy Policy
         </Link>

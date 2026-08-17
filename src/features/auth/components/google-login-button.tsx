@@ -50,12 +50,12 @@ export function GoogleLoginButton({
         type="button"
         disabled={isLoading}
         onClick={handleGoogleLogin}
-        className={`w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 text-neutral-800 dark:text-neutral-100 font-medium text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+        className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-full border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#18181B] font-medium text-[14px] transition-all duration-150 shadow-none active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
       >
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-neutral-400 border-t-transparent rounded-full animate-spin" />
         ) : (
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
