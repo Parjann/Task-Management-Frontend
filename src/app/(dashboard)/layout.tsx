@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 
@@ -9,7 +10,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const isSettingsPage = pathname.startsWith('/settings');
+
+  if (isSettingsPage) {
+    return (
+      <div className="min-h-screen flex w-full bg-white text-[#111827] overflow-hidden">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-white text-[#111827]">

@@ -201,7 +201,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
             type="button"
             onClick={() => {
               onClose();
-              router.push('/dashboard');
+              router.push('/settings');
             }}
             className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
           >
