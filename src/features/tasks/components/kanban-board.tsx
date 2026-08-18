@@ -7,6 +7,7 @@ import { TaskHeader } from './task-header';
 import { CreateTaskModal } from './create-task-modal';
 import { TaskListView } from './task-list-view';
 import { ViewMode, VisibleFields } from './fields-popover';
+import { FilterState } from './filter-popover';
 
 // Initial sample data replicating Figma designs with full fidelity
 const INITIAL_TASKS: Task[] = [
@@ -225,7 +226,7 @@ export function KanbanBoard() {
   const [targetColumnStatus, setTargetColumnStatus] =
     useState<TaskStatus>('TODO');
 
-  // Fields and View Mode State matching Figma design
+  // Fields and View Mode State
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [visibleFields, setVisibleFields] = useState<VisibleFields>({
@@ -235,6 +236,15 @@ export function KanbanBoard() {
     labels: true,
     status: false,
     reporter: false,
+  });
+
+  // Filter State
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    priorities: [],
+    statuses: [],
+    assignees: [],
+    quickPreset: 'all',
   });
 
   const handleToggleField = (fieldKey: keyof VisibleFields) => {
@@ -294,18 +304,57 @@ export function KanbanBoard() {
     setTasks((prev) => [...prev, newTask]);
   };
 
-  // Real-time task filtering based on Search Query
+  // Real-time task filtering based on Search Query and Active Filters
   const filteredTasks = useMemo(() => {
-    if (!searchQuery.trim()) return tasks;
-    const q = searchQuery.toLowerCase().trim();
-    return tasks.filter(
-      (task) =>
-        task.title.toLowerCase().includes(q) ||
-        (task.creator?.name || '').toLowerCase().includes(q) ||
-        (task.assignee?.name || '').toLowerCase().includes(q) ||
-        task.priority.toLowerCase().includes(q),
-    );
-  }, [tasks, searchQuery]);
+    return tasks.filter((task) => {
+      // 1. Search Query Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesTitle = task.title.toLowerCase().includes(q);
+        const matchesCreator = (task.creator?.name || '')
+          .toLowerCase()
+          .includes(q);
+        const matchesAssignee = (task.assignee?.name || '')
+          .toLowerCase()
+          .includes(q);
+        const matchesPriority = task.priority.toLowerCase().includes(q);
+        if (
+          !matchesTitle &&
+          !matchesCreator &&
+          !matchesAssignee &&
+          !matchesPriority
+        ) {
+          return false;
+        }
+      }
+
+      // 2. Priority Filter
+      if (
+        filters.priorities.length > 0 &&
+        !filters.priorities.includes(task.priority)
+      ) {
+        return false;
+      }
+
+      // 3. Status Filter
+      if (
+        filters.statuses.length > 0 &&
+        !filters.statuses.includes(task.status)
+      ) {
+        return false;
+      }
+
+      // 4. Assignee Filter
+      if (filters.assignees.length > 0) {
+        const assignee = task.assignee?.name || task.creator?.name || '';
+        if (!filters.assignees.includes(assignee)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [tasks, searchQuery, filters]);
 
   const columns: { id: TaskStatus; title: string }[] = [
     { id: 'TODO', title: 'To Do' },
@@ -316,7 +365,7 @@ export function KanbanBoard() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans">
-      {/* Top Header Row with Title, Action buttons and Search */}
+      {/* Top Header Row with Title, Action buttons, Search and Filter */}
       <TaskHeader
         onAddTask={() => handleOpenAddModal('TODO')}
         searchQuery={searchQuery}
@@ -328,6 +377,11 @@ export function KanbanBoard() {
         onViewModeChange={setViewMode}
         visibleFields={visibleFields}
         onToggleField={handleToggleField}
+        isFilterOpen={isFilterOpen}
+        onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
+        onCloseFilter={() => setIsFilterOpen(false)}
+        filters={filters}
+        onFilterChange={setFilters}
       />
 
       {/* Main View: Either Grouped List View or Kanban Board */}

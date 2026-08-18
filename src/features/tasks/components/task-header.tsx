@@ -7,12 +7,12 @@ import {
   ViewMode,
   VisibleFields,
 } from './fields-popover';
+import { FilterPopover, FilterState } from './filter-popover';
 
 interface TaskHeaderProps {
   onAddTask?: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onFilterClick?: () => void;
   isFieldsOpen: boolean;
   onToggleFields: () => void;
   onCloseFields: () => void;
@@ -20,13 +20,18 @@ interface TaskHeaderProps {
   onViewModeChange: (mode: ViewMode) => void;
   visibleFields: VisibleFields;
   onToggleField: (key: keyof VisibleFields) => void;
+  // Filter Props
+  isFilterOpen: boolean;
+  onToggleFilter: () => void;
+  onCloseFilter: () => void;
+  filters: FilterState;
+  onFilterChange: (filters: FilterState) => void;
 }
 
 export function TaskHeader({
   onAddTask,
   searchQuery,
   onSearchChange,
-  onFilterClick,
   isFieldsOpen,
   onToggleFields,
   onCloseFields,
@@ -34,6 +39,11 @@ export function TaskHeader({
   onViewModeChange,
   visibleFields,
   onToggleField,
+  isFilterOpen,
+  onToggleFilter,
+  onCloseFilter,
+  filters,
+  onFilterChange,
 }: TaskHeaderProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(
     Boolean(searchQuery),
@@ -68,6 +78,12 @@ export function TaskHeader({
     onSearchChange('');
     inputRef.current?.focus();
   };
+
+  const hasActiveFilters =
+    filters.priorities.length > 0 ||
+    filters.statuses.length > 0 ||
+    filters.assignees.length > 0 ||
+    (filters.quickPreset && filters.quickPreset !== 'all');
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
@@ -130,7 +146,6 @@ export function TaskHeader({
             <span>Fields</span>
           </button>
 
-          {/* Popover Dropdown matching Figma design */}
           <FieldsPopover
             isOpen={isFieldsOpen}
             onClose={onCloseFields}
@@ -141,15 +156,31 @@ export function TaskHeader({
           />
         </div>
 
-        {/* Filter Button */}
-        <button
-          type="button"
-          onClick={onFilterClick}
-          className="p-2 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827] transition-colors shadow-none"
-          title="Filter Tasks"
-        >
-          <Filter className="w-4 h-4" />
-        </button>
+        {/* Filter Button with Active Indicator and Popover */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onToggleFilter}
+            className={`p-2 rounded-xl border transition-colors shadow-none relative ${
+              isFilterOpen || hasActiveFilters
+                ? 'border-[#18181B] bg-[#F9FAFB] text-[#111827]'
+                : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827]'
+            }`}
+            title="Filter Tasks"
+          >
+            <Filter className="w-4 h-4" />
+            {hasActiveFilters && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#7C3AED] ring-2 ring-white" />
+            )}
+          </button>
+
+          <FilterPopover
+            isOpen={isFilterOpen}
+            onClose={onCloseFilter}
+            filters={filters}
+            onFilterChange={onFilterChange}
+          />
+        </div>
 
         {/* Primary + Add Task Button */}
         <button

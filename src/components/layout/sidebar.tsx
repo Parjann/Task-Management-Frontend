@@ -8,12 +8,10 @@ import {
   FolderKanban,
   ChevronDown,
   ChevronsUpDown,
-  LogOut,
-  User,
-  Settings,
 } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
-import { useLogoutUserMutation, useGetProfileQuery } from '@/features/auth';
+import { useGetProfileQuery } from '@/features/auth';
+import { UserDropdown } from './user-dropdown';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -30,16 +28,10 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
   const { data: profile } = useGetProfileQuery(undefined, {
     skip: !!user,
   });
-  const [logoutUser] = useLogoutUserMutation();
 
   const currentUser = user || profile;
   const displayName = currentUser?.name || 'Dexter';
   const displayAvatar = currentUser?.avatarUrl;
-
-  const handleLogout = async () => {
-    await logoutUser().unwrap();
-    router.push('/login');
-  };
 
   const navItems = [
     {
@@ -58,7 +50,7 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed lg:static top-0 left-0 z-40 h-screen w-64 bg-white border-r border-[#E5E7EB] flex flex-col transition-transform duration-200 ease-in-out ${
+      className={`fixed lg:static top-0 left-0 z-40 h-screen w-64 bg-white border-r border-[#E5E7EB] flex flex-col transition-transform duration-200 ease-in-out font-sans ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}
     >
@@ -89,48 +81,16 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
           <ChevronsUpDown className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#4B5563] flex-shrink-0" />
         </button>
 
-        {/* User Dropdown Menu */}
-        {isUserMenuOpen && (
-          <div className="absolute top-16 left-4 right-4 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
-            <div className="px-3 py-2 border-b border-[#F3F4F6]">
-              <p className="text-xs text-[#9CA3AF]">Signed in as</p>
-              <p className="text-xs font-semibold text-[#111827] truncate">
-                {currentUser?.email || `${displayName}@guest.local`}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setIsUserMenuOpen(false);
-                router.push('/dashboard');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#374151] hover:bg-[#F3F4F6] rounded-xl transition-colors"
-            >
-              <User className="w-4 h-4 text-[#9CA3AF]" />
-              Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsUserMenuOpen(false);
-                router.push('/settings');
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#374151] hover:bg-[#F3F4F6] rounded-xl transition-colors"
-            >
-              <Settings className="w-4 h-4 text-[#9CA3AF]" />
-              Settings
-            </button>
-            <div className="h-px bg-[#F3F4F6] my-1" />
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-            >
-              <LogOut className="w-4 h-4 text-red-500" />
-              Sign Out
-            </button>
-          </div>
-        )}
+        {/* User Dropdown Menu with Theme and Color submenus */}
+        <UserDropdown
+          isOpen={isUserMenuOpen}
+          onClose={() => setIsUserMenuOpen(false)}
+          user={{
+            name: displayName,
+            email: currentUser?.email || 'Dexter@gmail.com',
+            avatarUrl: displayAvatar,
+          }}
+        />
       </div>
 
       {/* Navigation Links */}
