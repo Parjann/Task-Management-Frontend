@@ -67,14 +67,43 @@ const INITIAL_PROJECTS: ProjectItem[] = [
   },
 ];
 
+import {
+  useGetProjectsQuery,
+  useCreateProjectMutation,
+  useDeleteProjectMutation,
+} from '../projectApi';
+
 export function ProjectListView() {
   const router = useRouter();
-  const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
+  const [localProjects, setLocalProjects] =
+    useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(
     Boolean(searchQuery),
   );
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // RTK Query API Hooks
+  const { data: apiProjects } = useGetProjectsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [createProjectMutation] = useCreateProjectMutation();
+  const [deleteProjectMutation] = useDeleteProjectMutation();
+
+  const projects = useMemo(() => {
+    if (apiProjects && apiProjects.length > 0) {
+      return apiProjects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        priority: 'HIGH' as TaskPriority,
+        status: 'TODO' as TaskStatus,
+        leadName: p.owner?.name || 'Dexter',
+        leadAvatar: p.owner?.avatarUrl || null,
+        dueDate: '12 Sep 2026',
+      }));
+    }
+    return localProjects;
+  }, [apiProjects, localProjects]);
 
   // Keyboard shortcut listener (Cmd+F / Ctrl+F)
   useEffect(() => {
@@ -181,7 +210,7 @@ export function ProjectListView() {
     });
   }, [projects, searchQuery, filters]);
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
@@ -196,13 +225,35 @@ export function ProjectListView() {
       dueDate: newDueDate,
     };
 
-    setProjects((prev) => [...prev, newProj]);
+    setLocalProjects((prev) => [...prev, newProj]);
     setNewProjectName('');
     setIsAddModalOpen(false);
+
+    try {
+      const generatedKey =
+        newProjectName
+          .trim()
+          .replace(/[^a-zA-Z]/g, '')
+          .slice(0, 4)
+          .toUpperCase() || 'PROJ';
+
+      await createProjectMutation({
+        name: newProjectName.trim(),
+        key: generatedKey,
+        description: 'New Project',
+      }).unwrap();
+    } catch {
+      // Optimistic local state remains
+    }
   };
 
-  const handleDeleteProject = (id: string) => {
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+  const handleDeleteProject = async (id: string) => {
+    setLocalProjects((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await deleteProjectMutation(id).unwrap();
+    } catch {
+      // Handled
+    }
   };
 
   const hasActiveFilters =

@@ -41,8 +41,19 @@ import { ShareTaskModal } from './share-task-modal';
 import { TaskSettingsModal } from './task-settings-modal';
 import { EmojiPickerPopover } from './emoji-picker-popover';
 import { TaskActionsMenu } from './task-actions-menu';
+import {
+  useGetTaskByIdQuery,
+  useGetSubtasksQuery,
+  useCreateSubtaskMutation,
+  useUpdateSubtaskMutation,
+  useDeleteSubtaskMutation,
+  useGetCommentsQuery,
+  useCreateCommentMutation,
+  useUpdateTaskMutation,
+} from '../taskApi';
 
 interface TaskDetailsViewProps {
+  taskId?: string;
   task?: Task;
   onBack?: () => void;
 }
@@ -57,7 +68,23 @@ interface UpdateItem {
   time: string;
 }
 
-export function TaskDetailsView({ task, onBack }: TaskDetailsViewProps) {
+export function TaskDetailsView({ taskId, task, onBack }: TaskDetailsViewProps) {
+  const effectiveTaskId = taskId || task?.id || 't-1';
+  const { data: liveTask } = useGetTaskByIdQuery(effectiveTaskId, {
+    skip: !taskId && !task?.id,
+  });
+  const { data: apiSubtasks } = useGetSubtasksQuery(effectiveTaskId, {
+    skip: !taskId && !task?.id,
+  });
+  const { data: apiComments } = useGetCommentsQuery(effectiveTaskId, {
+    skip: !taskId && !task?.id,
+  });
+
+  const [createSubtaskMutation] = useCreateSubtaskMutation();
+  const [updateSubtaskMutation] = useUpdateSubtaskMutation();
+  const [deleteSubtaskMutation] = useDeleteSubtaskMutation();
+  const [createCommentMutation] = useCreateCommentMutation();
+  const [updateTaskMutation] = useUpdateTaskMutation();
   // Lock state
   const [isLocked, setIsLocked] = useState(false);
 

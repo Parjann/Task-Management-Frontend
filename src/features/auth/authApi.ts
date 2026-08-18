@@ -83,6 +83,15 @@ export const authApi = baseApi.injectEndpoints({
       providesTags: ['User'],
     }),
 
+    uploadAvatar: builder.mutation<User, FormData>({
+      query: (formData) => ({
+        url: '/users/avatar',
+        method: 'PATCH',
+        body: formData,
+      }),
+      invalidatesTags: ['User'],
+    }),
+
     logoutUser: builder.mutation<{ message: string }, void>({
       queryFn: (_arg, { dispatch }) => {
         dispatch(logout());
@@ -99,5 +108,6 @@ export const {
   useGoogleLoginMutation,
   useGuestLoginMutation,
   useGetProfileQuery,
+  useUploadAvatarMutation,
   useLogoutUserMutation,
 } = authApi;

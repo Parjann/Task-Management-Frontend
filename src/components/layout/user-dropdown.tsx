@@ -68,7 +68,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
         }}
       />
 
-      <div className="absolute top-16 left-3 z-50 w-52 bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none">
+      <div className="absolute top-16 left-3 z-50 w-56 bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans">
         {/* User Card Header matching Figma */}
         <div className="flex flex-col items-center text-center pb-4 border-b border-[#F3F4F6]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -95,7 +95,11 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
               onClick={() =>
                 setActiveSubmenu(activeSubmenu === 'theme' ? null : 'theme')
               }
-              className="w-full flex items-center justify-between px-2 py-2 rounded-xl text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors ${
+                activeSubmenu === 'theme'
+                  ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
+                  : 'text-[#374151] hover:bg-[#F9FAFB]'
+              }`}
             >
               <div className="flex items-center gap-2.5">
                 <Sun className="w-4 h-4 text-[#6B7280]" />
@@ -104,19 +108,19 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
               <ChevronRight className="w-3.5 h-3.5 text-[#9CA3AF]" />
             </button>
 
-            {/* Theme Flyout Submenu (Screenshot 1) */}
+            {/* Theme Flyout Submenu */}
             {activeSubmenu === 'theme' && (
-              <div className="absolute left-[calc(100%+8px)] top-0 z-50 w-36 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                <p className="text-[11px] font-semibold text-[#9CA3AF] px-2 py-1 mb-1">
+              <div className="absolute left-[calc(100%+8px)] top-0 z-50 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
+                <p className="text-[11px] font-semibold text-[#9CA3AF] px-2.5 py-1 mb-1">
                   Theme
                 </p>
                 <div className="space-y-0.5">
                   <button
                     type="button"
                     onClick={() => setTheme('light')}
-                    className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <Sun className="w-3.5 h-3.5 text-[#6B7280]" />
                       <span className="text-[#111827]">Light</span>
                     </div>
@@ -128,9 +132,9 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
                   <button
                     type="button"
                     onClick={() => setTheme('dark')}
-                    className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <Moon className="w-3.5 h-3.5 text-[#6B7280]" />
                       <span className="text-[#111827]">Dark</span>
                     </div>
@@ -143,7 +147,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
             )}
           </div>
 
-          {/* 2. Color Mode with Flyout (Screenshot 3) */}
+          {/* 2. Color Mode with Flyout */}
           <div
             className="relative"
             onMouseEnter={() => setActiveSubmenu('color')}
@@ -153,7 +157,11 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
               onClick={() =>
                 setActiveSubmenu(activeSubmenu === 'color' ? null : 'color')
               }
-              className="w-full flex items-center justify-between px-2 py-2 rounded-xl text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors ${
+                activeSubmenu === 'color'
+                  ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
+                  : 'text-[#374151] hover:bg-[#F9FAFB]'
+              }`}
             >
               <div className="flex items-center gap-2.5">
                 <span
@@ -167,8 +175,8 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
 
             {/* Color Mode Flyout Submenu */}
             {activeSubmenu === 'color' && (
-              <div className="absolute left-[calc(100%+8px)] top-0 z-50 w-36 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                <p className="text-[11px] font-semibold text-[#9CA3AF] px-2 py-1 mb-1">
+              <div className="absolute left-[calc(100%+8px)] top-0 z-50 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
+                <p className="text-[11px] font-semibold text-[#9CA3AF] px-2.5 py-1 mb-1">
                   Color Mode
                 </p>
                 <div className="space-y-0.5">
@@ -177,11 +185,11 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
                       key={opt.id}
                       type="button"
                       onClick={() => setColorMode(opt.id)}
-                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+                      className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <span
-                          className="w-3 h-3 rounded-xs"
+                          className="w-3.5 h-3.5 rounded-sm flex-shrink-0"
                           style={{ backgroundColor: opt.swatchBg }}
                         />
                         <span className="text-[#111827]">{opt.label}</span>
@@ -203,7 +211,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
               onClose();
               router.push('/settings');
             }}
-            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
           >
             <Settings className="w-4 h-4 text-[#6B7280]" />
             <span>Settings</span>
@@ -214,7 +222,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut className="w-4 h-4 text-red-500" />
               <span>Sign Out</span>

@@ -1,4 +1,5 @@
 import { User } from '../auth/types';
+export type { Comment, CreateCommentDto } from '../comments';
 
 export type TaskStatus =
   | 'BACKLOG'
@@ -28,6 +29,18 @@ export interface Subtask {
   isCompleted: boolean;
   orderIndex: number;
   createdAt: string;
+}
+
+export interface CreateSubtaskDto {
+  title: string;
+  isCompleted?: boolean;
+  orderIndex?: number;
+}
+
+export interface UpdateSubtaskDto {
+  title?: string;
+  isCompleted?: boolean;
+  orderIndex?: number;
 }
 
 export interface Task {

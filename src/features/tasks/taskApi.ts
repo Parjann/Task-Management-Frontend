@@ -1,5 +1,15 @@
 import { baseApi } from '@/store/api/baseApi';
-import { CreateTaskDto, MoveTaskDto, Task, UpdateTaskDto } from './types';
+import {
+  CreateTaskDto,
+  MoveTaskDto,
+  Task,
+  UpdateTaskDto,
+  Subtask,
+  CreateSubtaskDto,
+  UpdateSubtaskDto,
+  Comment,
+  CreateCommentDto,
+} from './types';
 
 export const taskApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -71,6 +81,95 @@ export const taskApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'Task', id: 'LIST' }],
     }),
+
+    // Subtasks
+    getSubtasks: builder.query<Subtask[], string>({
+      query: (taskId) => `/tasks/${taskId}/subtasks`,
+      providesTags: (_result, _error, taskId) => [
+        { type: 'Subtask', id: `LIST_${taskId}` },
+      ],
+    }),
+
+    createSubtask: builder.mutation<
+      Subtask,
+      { taskId: string; body: CreateSubtaskDto }
+    >({
+      query: ({ taskId, body }) => ({
+        url: `/tasks/${taskId}/subtasks`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { taskId }) => [
+        { type: 'Subtask', id: `LIST_${taskId}` },
+        { type: 'Task', id: taskId },
+      ],
+    }),
+
+    updateSubtask: builder.mutation<
+      Subtask,
+      { id: string; taskId?: string; body: UpdateSubtaskDto }
+    >({
+      query: ({ id, body }) => ({
+        url: `/subtasks/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id, taskId }) => [
+        { type: 'Subtask', id },
+        ...(taskId ? [{ type: 'Subtask' as const, id: `LIST_${taskId}` }] : []),
+      ],
+    }),
+
+    deleteSubtask: builder.mutation<
+      { message: string },
+      { id: string; taskId?: string }
+    >({
+      query: ({ id }) => ({
+        url: `/subtasks/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { id, taskId }) => [
+        { type: 'Subtask', id },
+        ...(taskId ? [{ type: 'Subtask' as const, id: `LIST_${taskId}` }] : []),
+      ],
+    }),
+
+    // Comments
+    getComments: builder.query<Comment[], string>({
+      query: (taskId) => `/tasks/${taskId}/comments`,
+      providesTags: (_result, _error, taskId) => [
+        { type: 'Comment', id: `LIST_${taskId}` },
+      ],
+    }),
+
+    createComment: builder.mutation<
+      Comment,
+      { taskId: string; body: CreateCommentDto }
+    >({
+      query: ({ taskId, body }) => ({
+        url: `/tasks/${taskId}/comments`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { taskId }) => [
+        { type: 'Comment', id: `LIST_${taskId}` },
+        { type: 'Activity', id: 'LIST' },
+      ],
+    }),
+
+    deleteComment: builder.mutation<
+      { message: string },
+      { id: string; taskId?: string }
+    >({
+      query: ({ id }) => ({
+        url: `/comments/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { id, taskId }) => [
+        { type: 'Comment', id },
+        ...(taskId ? [{ type: 'Comment' as const, id: `LIST_${taskId}` }] : []),
+      ],
+    }),
   }),
 });
 
@@ -81,4 +180,11 @@ export const {
   useUpdateTaskMutation,
   useMoveTaskMutation,
   useDeleteTaskMutation,
+  useGetSubtasksQuery,
+  useCreateSubtaskMutation,
+  useUpdateSubtaskMutation,
+  useDeleteSubtaskMutation,
+  useGetCommentsQuery,
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
 } = taskApi;

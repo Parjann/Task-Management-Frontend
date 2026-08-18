@@ -1,14 +1,20 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Pencil, Check, AlertTriangle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useGetProfileQuery, useUploadAvatarMutation } from '@/features/auth';
 
 export function ProfileTab() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form State matching screenshot
+  const { data: profile, isLoading } = useGetProfileQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [uploadAvatarMutation] = useUploadAvatarMutation();
+
+  // Form State
   const [avatarUrl, setAvatarUrl] = useState<string>(
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
   );
@@ -17,16 +23,34 @@ export function ProfileTab() {
   const [title, setTitle] = useState('Designer');
   const [username, setUsername] = useState('Dexuser');
 
+  // Sync profile data when loaded
+  useEffect(() => {
+    if (profile) {
+      if (profile.avatarUrl) setAvatarUrl(profile.avatarUrl);
+      if (profile.email) setEmail(profile.email);
+      if (profile.name) setFullName(profile.name);
+    }
+  }, [profile]);
+
   // Modals & Feedback
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [tempEmail, setTempEmail] = useState(email);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [showSavedToast, setShowSavedToast] = useState(false);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarUrl(URL.createObjectURL(file));
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        await uploadAvatarMutation(formData).unwrap();
+      } catch {
+        // Handled
+      }
       triggerToast();
     }
   };

@@ -49,15 +49,15 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed lg:static top-0 left-0 z-40 h-screen bg-white border-r border-[#E5E7EB] flex flex-col font-sans transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 select-none ${
+      className={`fixed lg:static top-0 left-0 z-40 h-screen bg-white border-r border-[#E5E7EB] flex flex-col font-sans transition-all duration-300 ease-in-out flex-shrink-0 select-none ${
         isOpen
-          ? 'w-64 opacity-100 translate-x-0'
-          : 'w-0 opacity-0 -translate-x-full border-r-0 pointer-events-none'
+          ? 'w-64 opacity-100 translate-x-0 overflow-visible'
+          : 'w-0 opacity-0 -translate-x-full border-r-0 overflow-hidden pointer-events-none'
       }`}
     >
       <div className="w-64 h-full flex flex-col">
         {/* User / Workspace Dropdown Header */}
-        <div className="p-4 border-b border-transparent relative">
+        <div className="p-4 border-b border-transparent relative z-50">
           <button
             type="button"
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}

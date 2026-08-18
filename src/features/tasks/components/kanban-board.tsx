@@ -8,6 +8,11 @@ import { CreateTaskModal } from './create-task-modal';
 import { TaskListView } from './task-list-view';
 import { ViewMode, VisibleFields } from './fields-popover';
 import { CascadingFilterState } from './cascading-filter-menu';
+import {
+  useGetTasksQuery,
+  useCreateTaskMutation,
+  useMoveTaskMutation,
+} from '../taskApi';
 
 // Initial sample data replicating Figma designs with full fidelity
 const INITIAL_TASKS: Task[] = [
@@ -220,11 +225,26 @@ const INITIAL_TASKS: Task[] = [
 ];
 
 export function KanbanBoard() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [localTasks, setLocalTasks] = useState<Task[]>(INITIAL_TASKS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [targetColumnStatus, setTargetColumnStatus] =
     useState<TaskStatus>('TODO');
+
+  // RTK Query API Hooks
+  const { data: apiTasks, isLoading: isApiLoading } = useGetTasksQuery(
+    { search: searchQuery || undefined },
+    { refetchOnMountOrArgChange: true },
+  );
+  const [createTaskMutation] = useCreateTaskMutation();
+
+  // Combine API tasks with fallback
+  const tasks = useMemo(() => {
+    if (apiTasks && apiTasks.length > 0) {
+      return apiTasks;
+    }
+    return localTasks;
+  }, [apiTasks, localTasks]);
 
   // Fields and View Mode State
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
@@ -259,7 +279,7 @@ export function KanbanBoard() {
     setIsCreateModalOpen(true);
   };
 
-  const handleCreateTask = (newTaskData: {
+  const handleCreateTask = async (newTaskData: {
     title: string;
     status: TaskStatus;
     priority: TaskPriority;
@@ -301,7 +321,19 @@ export function KanbanBoard() {
       updatedAt: new Date().toISOString(),
     };
 
-    setTasks((prev) => [...prev, newTask]);
+    setLocalTasks((prev) => [...prev, newTask]);
+
+    try {
+      await createTaskMutation({
+        projectId: 'p-1',
+        title: newTaskData.title,
+        status: newTaskData.status,
+        priority: newTaskData.priority,
+        dueDate: newTaskData.dueDate,
+      }).unwrap();
+    } catch {
+      // Optimistic state remains in local fallback
+    }
   };
 
   // Real-time task filtering based on Search Query and Cascading Filters
