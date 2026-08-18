@@ -7,7 +7,7 @@ import { TaskHeader } from './task-header';
 import { CreateTaskModal } from './create-task-modal';
 import { TaskListView } from './task-list-view';
 import { ViewMode, VisibleFields } from './fields-popover';
-import { FilterState } from './filter-popover';
+import { CascadingFilterState } from './cascading-filter-menu';
 
 // Initial sample data replicating Figma designs with full fidelity
 const INITIAL_TASKS: Task[] = [
@@ -238,13 +238,13 @@ export function KanbanBoard() {
     reporter: false,
   });
 
-  // Filter State
+  // Filter State (Cascading Filter)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    priorities: [],
-    statuses: [],
-    assignees: [],
-    quickPreset: 'all',
+  const [filters, setFilters] = useState<CascadingFilterState>({
+    priority: 'ALL',
+    status: 'ALL',
+    member: 'ALL',
+    label: 'ALL',
   });
 
   const handleToggleField = (fieldKey: keyof VisibleFields) => {
@@ -304,7 +304,7 @@ export function KanbanBoard() {
     setTasks((prev) => [...prev, newTask]);
   };
 
-  // Real-time task filtering based on Search Query and Active Filters
+  // Real-time task filtering based on Search Query and Cascading Filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       // 1. Search Query Filter
@@ -328,28 +328,33 @@ export function KanbanBoard() {
         }
       }
 
-      // 2. Priority Filter
-      if (
-        filters.priorities.length > 0 &&
-        !filters.priorities.includes(task.priority)
-      ) {
-        return false;
-      }
-
-      // 3. Status Filter
-      if (
-        filters.statuses.length > 0 &&
-        !filters.statuses.includes(task.status)
-      ) {
-        return false;
-      }
-
-      // 4. Assignee Filter
-      if (filters.assignees.length > 0) {
-        const assignee = task.assignee?.name || task.creator?.name || '';
-        if (!filters.assignees.includes(assignee)) {
+      // 2. Cascading Priority Filter
+      if (filters.priority !== 'ALL') {
+        if (filters.priority === 'NONE' && task.priority) return false;
+        if (filters.priority !== 'NONE' && task.priority !== filters.priority) {
           return false;
         }
+      }
+
+      // 3. Cascading Status Filter
+      if (filters.status !== 'ALL' && task.status !== filters.status) {
+        return false;
+      }
+
+      // 4. Cascading Member Filter
+      if (filters.member !== 'ALL') {
+        const memberName = task.assignee?.name || task.creator?.name || '';
+        if (memberName !== filters.member) {
+          return false;
+        }
+      }
+
+      // 5. Cascading Label Filter
+      if (filters.label !== 'ALL') {
+        const hasLabel = task.labels?.some(
+          (l) => l.label?.name.toLowerCase() === filters.label.toLowerCase(),
+        );
+        if (!hasLabel) return false;
       }
 
       return true;

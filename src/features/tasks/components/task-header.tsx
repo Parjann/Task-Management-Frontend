@@ -7,7 +7,10 @@ import {
   ViewMode,
   VisibleFields,
 } from './fields-popover';
-import { FilterPopover, FilterState } from './filter-popover';
+import {
+  CascadingFilterMenu,
+  CascadingFilterState,
+} from './cascading-filter-menu';
 
 interface TaskHeaderProps {
   onAddTask?: () => void;
@@ -20,12 +23,12 @@ interface TaskHeaderProps {
   onViewModeChange: (mode: ViewMode) => void;
   visibleFields: VisibleFields;
   onToggleField: (key: keyof VisibleFields) => void;
-  // Filter Props
+  // Cascading Filter Props
   isFilterOpen: boolean;
   onToggleFilter: () => void;
   onCloseFilter: () => void;
-  filters: FilterState;
-  onFilterChange: (filters: FilterState) => void;
+  filters: CascadingFilterState;
+  onFilterChange: (filters: CascadingFilterState) => void;
 }
 
 export function TaskHeader({
@@ -80,10 +83,10 @@ export function TaskHeader({
   };
 
   const hasActiveFilters =
-    filters.priorities.length > 0 ||
-    filters.statuses.length > 0 ||
-    filters.assignees.length > 0 ||
-    (filters.quickPreset && filters.quickPreset !== 'all');
+    filters.priority !== 'ALL' ||
+    filters.status !== 'ALL' ||
+    filters.member !== 'ALL' ||
+    filters.label !== 'ALL';
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
@@ -131,7 +134,7 @@ export function TaskHeader({
           </button>
         )}
 
-        {/* Fields Button with Anchored Dropdown */}
+        {/* Fields Button with List/Board View Switcher */}
         <div className="relative">
           <button
             type="button"
@@ -156,7 +159,7 @@ export function TaskHeader({
           />
         </div>
 
-        {/* Filter Button with Active Indicator and Popover */}
+        {/* Filter Button with Cascading Flyout Menu */}
         <div className="relative">
           <button
             type="button"
@@ -174,7 +177,7 @@ export function TaskHeader({
             )}
           </button>
 
-          <FilterPopover
+          <CascadingFilterMenu
             isOpen={isFilterOpen}
             onClose={onCloseFilter}
             filters={filters}

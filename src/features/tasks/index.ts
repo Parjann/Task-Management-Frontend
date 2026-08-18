@@ -19,3 +19,5 @@ export * from './components/share-task-modal';
 export * from './components/task-settings-modal';
 export * from './components/emoji-picker-popover';
 export * from './components/task-actions-menu';
+export * from './components/filter-popover';
+export * from './components/cascading-filter-menu';
