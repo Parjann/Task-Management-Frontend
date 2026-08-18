@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, Plus, MoreHorizontal } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { PriorityBadge } from './priority-badge';
@@ -11,6 +12,7 @@ interface TaskListViewProps {
 }
 
 export function TaskListView({ tasks, onAddTask }: TaskListViewProps) {
+  const router = useRouter();
   // Collapsed sections state
   const [collapsedSections, setCollapsedSections] = useState<
     Record<TaskStatus, boolean>
@@ -113,10 +115,11 @@ export function TaskListView({ tasks, onAddTask }: TaskListViewProps) {
                         return (
                           <tr
                             key={task.id}
-                            className="hover:bg-[#F9FAFB]/70 transition-colors group select-none"
+                            onClick={() => router.push(`/tasks/${task.id}`)}
+                            className="hover:bg-[#F9FAFB]/70 transition-colors group select-none cursor-pointer"
                           >
                             {/* Task Name */}
-                            <td className="py-3.5 px-6 font-semibold text-[#111827]">
+                            <td className="py-3.5 px-6 font-semibold text-[#111827] group-hover:text-[#6366F1] transition-colors">
                               {task.title}
                             </td>
 

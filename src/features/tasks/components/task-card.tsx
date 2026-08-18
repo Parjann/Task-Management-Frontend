@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Calendar, Tag, MoreHorizontal } from 'lucide-react';
 import { Task } from '../types';
 import { VisibleFields } from './fields-popover';
@@ -23,6 +24,7 @@ export function TaskCard({
     reporter: false,
   },
 }: TaskCardProps) {
+  const router = useRouter();
   const assigneeName = task.assignee?.name || task.creator?.name || 'Admin';
   const assigneeAvatar = task.assignee?.avatarUrl || task.creator?.avatarUrl;
 
@@ -58,14 +60,20 @@ export function TaskCard({
         ];
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow group select-none">
+    <div
+      onClick={() => router.push(`/tasks/${task.id}`)}
+      className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md transition-all cursor-pointer group select-none"
+    >
       {/* Title Row */}
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2">
+        <h3 className="text-[14px] font-semibold text-[#111827] group-hover:text-[#6366F1] transition-colors leading-snug line-clamp-2">
           {task.title}
         </h3>
         <button
           type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
           className="text-[#9CA3AF] hover:text-[#4B5563] p-1 rounded-md hover:bg-[#F3F4F6] transition-colors -mr-1 -mt-1"
         >
           <MoreHorizontal className="w-4 h-4" />
