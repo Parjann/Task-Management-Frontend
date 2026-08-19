@@ -25,6 +25,12 @@ import {
   CascadingFilterState,
 } from '@/features/tasks/components/cascading-filter-menu';
 import { ProjectColumn } from './project-column';
+import {
+  useGetProjectsQuery,
+  useCreateProjectMutation,
+  useDeleteProjectMutation,
+} from '../projectApi';
+import { FeedbackToast, ToastMessage } from '@/components/ui/feedback-toast';
 
 export interface ProjectItem {
   id: string;
@@ -36,12 +42,6 @@ export interface ProjectItem {
   dueDate: string;
 }
 
-import {
-  useGetProjectsQuery,
-  useCreateProjectMutation,
-  useDeleteProjectMutation,
-} from '../projectApi';
-
 export function ProjectListView() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,6 +49,16 @@ export function ProjectListView() {
     Boolean(searchQuery),
   );
   const inputRef = useRef<HTMLInputElement>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  const showToast = (toastData: ToastMessage) => {
+    setToast(toastData);
+    setTimeout(() => {
+      setToast((current) =>
+        current?.message === toastData.message ? null : current,
+      );
+    }, 4000);
+  };
 
   // RTK Query API Hooks (Live Database Data Only)
   const { data: apiProjects = [], isLoading } = useGetProjectsQuery(undefined, {
@@ -89,17 +99,7 @@ export function ProjectListView() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSearchExpanded, searchQuery]);
 
-  const handleOpenSearch = () => {
-    setIsSearchExpanded(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    inputRef.current?.focus();
-  };
-
-  // Fields and View Mode State (List vs Board) matching Tasks view
+  // Fields and View Mode state
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [visibleFields, setVisibleFields] = useState<VisibleFields>({
@@ -118,7 +118,7 @@ export function ProjectListView() {
     }));
   };
 
-  // Cascading Filter State matching Tasks view
+  // Filter State (Cascading Filter)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<CascadingFilterState>({
     priority: 'ALL',
@@ -180,12 +180,14 @@ export function ProjectListView() {
     if (!newProjectName.trim()) return;
 
     try {
-      const generatedKey =
-        newProjectName
-          .trim()
-          .replace(/[^a-zA-Z]/g, '')
-          .slice(0, 4)
-          .toUpperCase() || 'PROJ';
+      const letters = newProjectName.replace(/[^a-zA-Z]/g, '').toUpperCase();
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let base = letters.slice(0, 3);
+      if (base.length < 2) base = 'PR';
+      const suffix =
+        alphabet[Math.floor(Math.random() * alphabet.length)] +
+        alphabet[Math.floor(Math.random() * alphabet.length)];
+      const generatedKey = (base + suffix).slice(0, 5);
 
       await createProjectMutation({
         name: newProjectName.trim(),
@@ -195,16 +197,40 @@ export function ProjectListView() {
 
       setNewProjectName('');
       setIsAddModalOpen(false);
-    } catch (err) {
-      console.error('Failed to create project:', err);
+      showToast({
+        type: 'success',
+        title: 'Project Created',
+        message: `Project "${newProjectName.trim()}" created successfully!`,
+      });
+    } catch (err: any) {
+      const errMsg =
+        err?.data?.message ||
+        err?.message ||
+        'Failed to create project. Please try again.';
+      showToast({
+        type: 'error',
+        title: 'Creation Failed',
+        message: Array.isArray(errMsg) ? errMsg.join(', ') : errMsg,
+      });
     }
   };
 
   const handleDeleteProject = async (id: string) => {
     try {
       await deleteProjectMutation(id).unwrap();
-    } catch (err) {
-      console.error('Failed to delete project:', err);
+      showToast({
+        type: 'success',
+        title: 'Project Deleted',
+        message: 'Project removed successfully.',
+      });
+    } catch (err: any) {
+      const errMsg =
+        err?.data?.message || err?.message || 'Failed to delete project.';
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: Array.isArray(errMsg) ? errMsg.join(', ') : errMsg,
+      });
     }
   };
 
@@ -222,7 +248,7 @@ export function ProjectListView() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans relative">
       {/* Top Header Row with Title and Action buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
         <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
@@ -230,55 +256,58 @@ export function ProjectListView() {
         </h1>
 
         <div className="flex items-center gap-2 flex-wrap relative">
-          {/* Search Input Bar / Icon */}
-          {isSearchExpanded ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white w-60 sm:w-72 md:w-80 shadow-2xs focus-within:ring-2 focus-within:ring-[#7C3AED]/20 focus-within:border-[#7C3AED] transition-all">
-              <Search className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-sm text-[#111827] placeholder:text-[#9CA3AF] bg-transparent focus:outline-none"
-              />
-              {searchQuery ? (
+          {/* 1. Animated Search Input */}
+          <div className="relative flex items-center">
+            {isSearchExpanded ? (
+              <div className="relative flex items-center animate-in fade-in zoom-in-95 duration-150">
+                <Search className="w-3.5 h-3.5 text-[#9CA3AF] absolute left-3 pointer-events-none" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-44 md:w-56 pl-8 pr-7 py-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-xs text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-all"
+                />
                 <button
                   type="button"
-                  onClick={handleClearSearch}
-                  className="text-[#9CA3AF] hover:text-[#111827] p-0.5 rounded-md transition-colors"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchExpanded(false);
+                  }}
+                  className="absolute right-2 text-[#9CA3AF] hover:text-[#111827] p-0.5 rounded-md"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-              ) : (
-                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-[#9CA3AF] bg-[#F9FAFB] border border-[#E5E7EB] rounded-md">
-                  ⌘F
-                </kbd>
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={handleOpenSearch}
-              className="p-2 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827] transition-colors shadow-none"
-              title="Search Projects (⌘F)"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-          )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchExpanded(true);
+                  setTimeout(() => inputRef.current?.focus(), 50);
+                }}
+                className="h-8 px-2.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-semibold text-[#374151] hover:bg-[#F9FAFB] flex items-center gap-1.5 transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                title="Search projects (⌘F)"
+              >
+                <Search className="w-3.5 h-3.5 text-[#6B7280]" />
+                <span className="hidden sm:inline">Search</span>
+              </button>
+            )}
+          </div>
 
-          {/* Fields Button with List / Board Toggle & Checkboxes matching Tasks */}
+          {/* 2. Fields Button */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsFieldsOpen(!isFieldsOpen)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shadow-none ${
+              className={`h-8 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)] ${
                 isFieldsOpen
-                  ? 'border-[#18181B] bg-[#F9FAFB] text-[#111827]'
-                  : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#374151] hover:text-[#111827]'
+                  ? 'bg-[#F3F4F6] border-[#D1D5DB] text-[#111827]'
+                  : 'bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]'
               }`}
             >
-              <Columns className="w-4 h-4 text-[#6B7280]" />
+              <Columns className="w-3.5 h-3.5 text-[#6B7280]" />
               <span>Fields</span>
             </button>
 
@@ -292,21 +321,25 @@ export function ProjectListView() {
             />
           </div>
 
-          {/* Filter Button with Cascading Flyout Menu */}
+          {/* 3. Filter Button */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`p-2 rounded-xl border transition-colors shadow-none relative ${
-                isFilterOpen || hasActiveFilters
-                  ? 'border-[#18181B] bg-[#F9FAFB] text-[#111827]'
-                  : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827]'
+              className={`h-8 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)] ${
+                hasActiveFilters || isFilterOpen
+                  ? 'bg-[#F3F4F6] border-[#D1D5DB] text-[#111827]'
+                  : 'bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]'
               }`}
-              title="Filter Projects"
             >
-              <Filter className="w-4 h-4" />
+              <Filter
+                className={`w-3.5 h-3.5 ${
+                  hasActiveFilters ? 'text-[#7C3AED]' : 'text-[#6B7280]'
+                }`}
+              />
+              <span>Filter</span>
               {hasActiveFilters && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#7C3AED] ring-2 ring-white" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] ml-0.5" />
               )}
             </button>
 
@@ -318,18 +351,19 @@ export function ProjectListView() {
             />
           </div>
 
-          {/* Primary + Add Project Button */}
+          {/* 4. Add Project Button */}
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#18181B] hover:bg-black text-white text-sm font-medium transition-all shadow-sm active:scale-[0.99]"
+            className="h-8 px-3 rounded-xl bg-[#18181B] hover:bg-black text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs ml-1"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Add Project</span>
           </button>
         </div>
       </div>
-      {/* Main View: Either Table List View or Kanban Board View */}
+
+      {/* Main View Area */}
       {viewMode === 'board' ? (
         <div className="flex-1 flex items-start gap-5 overflow-x-auto pb-6 pt-1 select-none scrollbar-thin">
           {columns.map((col) => {
@@ -343,111 +377,139 @@ export function ProjectListView() {
                 title={col.title}
                 projects={colProjects}
                 visibleFields={visibleFields}
-                onAddProject={(status) => {
-                  setNewStatus(status);
-                  setIsAddModalOpen(true);
-                }}
-                onDeleteProject={handleDeleteProject}
+                onAddProject={() => setIsAddModalOpen(true)}
               />
             );
           })}
         </div>
       ) : (
-        /* Projects Table Card */
-        <div className="w-full bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[13px] font-medium text-[#6B7280]">
-                  <th className="py-3 px-6 font-medium">Projects</th>
-                  <th className="py-3 px-6 font-medium w-36">Priority</th>
-                  <th className="py-3 px-6 font-medium w-32">Lead</th>
-                  <th className="py-3 px-6 font-medium w-40">Due Date</th>
-                  <th className="py-3 px-6 font-medium text-right w-24">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F3F4F6] text-[14px]">
-                {filteredProjects.map((project) => (
-                  <tr
-                    key={project.id}
-                    onClick={() => router.push(`/projects/${project.id}`)}
-                    className="hover:bg-[#F9FAFB]/70 transition-colors group select-none cursor-pointer relative"
-                  >
-                    {/* Project Name Link */}
-                    <td className="py-3.5 px-6 font-semibold text-[#2563EB] hover:underline">
-                      {project.name}
-                    </td>
-
-                    {/* Priority */}
-                    <td className="py-3.5 px-6">
-                      <PriorityBadge priority={project.priority} />
-                    </td>
-
-                    {/* Lead */}
-                    <td className="py-3.5 px-6">
-                      {project.leadAvatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={project.leadAvatar}
-                          alt={project.leadName || 'Lead'}
-                          className="w-6 h-6 rounded-full object-cover ring-1 ring-[#E5E7EB]"
-                        />
-                      ) : project.leadName ? (
-                        <div className="w-6 h-6 rounded-full bg-[#E5E7EB] text-[#4B5563] text-[10px] font-bold flex items-center justify-center">
-                          {project.leadName.slice(0, 2).toUpperCase()}
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full border border-dashed border-[#D1D5DB] text-[#9CA3AF] flex items-center justify-center text-xs">
-                          <Plus className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Due Date */}
-                    <td className="py-3.5 px-6 text-[#374151] font-medium text-[13px]">
-                      {project.dueDate}
-                    </td>
-
-                    {/* Actions 3-dot Menu */}
-                    <td className="py-3.5 px-6 text-right relative">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(
-                            activeMenuId === project.id ? null : project.id,
-                          );
-                        }}
-                        className="p-1 rounded-md text-[#9CA3AF] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors"
-                      >
-                        <MoreHorizontal className="w-4 h-4 inline-block" />
-                      </button>
-                      <TaskActionsMenu
-                        isOpen={activeMenuId === project.id}
-                        onClose={() => setActiveMenuId(null)}
-                        onCopyLink={() =>
-                          navigator.clipboard.writeText(
-                            `${window.location.origin}/projects/${project.id}`,
-                          )
-                        }
-                        onDelete={() => handleDeleteProject(project.id)}
-                      />
-                    </td>
+        <div className="flex-1 overflow-y-auto pb-6 pt-1">
+          <div className="w-full bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse select-none">
+                <thead>
+                  <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[13px] font-medium text-[#6B7280]">
+                    <th className="py-3.5 px-6 font-medium">Projects</th>
+                    <th className="py-3.5 px-6 font-medium w-36">Priority</th>
+                    <th className="py-3.5 px-6 font-medium w-36">Lead</th>
+                    <th className="py-3.5 px-6 font-medium w-40">Due Date</th>
+                    <th className="py-3.5 px-6 font-medium text-right w-20">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[#F3F4F6] text-[14px]">
+                  {filteredProjects.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="py-10 text-center text-xs text-[#9CA3AF]"
+                      >
+                        {isLoading
+                          ? 'Loading projects...'
+                          : searchQuery
+                          ? 'No projects match your search.'
+                          : 'No projects yet. Click "Add Project" to create your first project!'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProjects.map((project) => (
+                      <tr
+                        key={project.id}
+                        onClick={() => router.push(`/projects/${project.id}`)}
+                        className="hover:bg-[#F9FAFB]/70 transition-colors group cursor-pointer"
+                      >
+                        {/* Project Name */}
+                        <td className="py-4 px-6 font-semibold text-[#111827] group-hover:text-[#6366F1] transition-colors">
+                          <Link
+                            href={`/projects/${project.id}`}
+                            className="hover:underline"
+                          >
+                            {project.name}
+                          </Link>
+                        </td>
 
-          {/* + Add Projects bottom row */}
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="w-full py-3.5 px-6 text-xs font-semibold text-[#6B7280] hover:text-[#111827] flex items-center gap-1.5 hover:bg-[#F9FAFB] cursor-pointer transition-colors border-t border-[#F3F4F6]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Projects</span>
-          </button>
+                        {/* Priority */}
+                        <td className="py-4 px-6">
+                          <PriorityBadge priority={project.priority} />
+                        </td>
+
+                        {/* Lead / Owner */}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            {project.leadAvatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={project.leadAvatar}
+                                alt={project.leadName || 'Lead'}
+                                className="w-6 h-6 rounded-full object-cover ring-1 ring-[#E5E7EB]"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#8B5CF6] to-[#EC4899] flex items-center justify-center text-white text-[10px] font-bold">
+                                {project.leadName
+                                  ? project.leadName.slice(0, 1).toUpperCase()
+                                  : 'D'}
+                              </div>
+                            )}
+                            <span className="text-[13px] font-medium text-[#374151]">
+                              {project.leadName || 'Dexter'}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Due Date */}
+                        <td className="py-4 px-6 text-[#374151] font-medium text-[13px]">
+                          {project.dueDate}
+                        </td>
+
+                        {/* Actions Menu */}
+                        <td className="py-4 px-6 text-right relative">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setActiveMenuId(
+                                activeMenuId === project.id ? null : project.id,
+                              );
+                            }}
+                            className="p-1 rounded-md text-[#9CA3AF] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors"
+                          >
+                            <MoreHorizontal className="w-4 h-4 inline-block" />
+                          </button>
+
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <TaskActionsMenu
+                              isOpen={activeMenuId === project.id}
+                              onClose={() => setActiveMenuId(null)}
+                              onCopyLink={() => {
+                                if (typeof window !== 'undefined') {
+                                  navigator.clipboard?.writeText(
+                                    `${window.location.origin}/projects/${project.id}`,
+                                  );
+                                }
+                              }}
+                              onDelete={() => handleDeleteProject(project.id)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bottom Add Project Action */}
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-full py-3.5 px-6 text-xs font-semibold text-[#6B7280] hover:text-[#111827] flex items-center gap-1.5 hover:bg-[#F9FAFB] cursor-pointer transition-colors border-t border-[#F3F4F6]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Project</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -456,22 +518,22 @@ export function ProjectListView() {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border border-[#E5E7EB] w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150 select-none">
             <div className="flex items-center justify-between pb-3 border-b border-[#F3F4F6]">
-              <h2 className="text-base font-bold text-[#111827]">
+              <h3 className="text-sm font-bold text-[#111827]">
                 Create New Project
-              </h2>
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
                 className="p-1 rounded-lg text-[#9CA3AF] hover:text-[#111827]"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateProject} className="space-y-4 mt-4">
               <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-1">
-                  Project Title
+                  Project Name
                 </label>
                 <input
                   type="text"
@@ -479,7 +541,7 @@ export function ProjectListView() {
                   placeholder="e.g. Design Homepage"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] text-xs text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
                 />
               </div>
 
@@ -520,6 +582,9 @@ export function ProjectListView() {
           </div>
         </div>
       )}
+
+      {/* Feedback Toast */}
+      <FeedbackToast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

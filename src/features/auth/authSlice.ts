@@ -22,7 +22,7 @@ export const authSlice = createSlice({
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
       state.isAuthenticated = true;
-      Cookies.set('accessToken', action.payload.accessToken, { expires: 7 });
+      Cookies.set('accessToken', action.payload.accessToken, { expires: 7, path: '/' });
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
@@ -31,7 +31,7 @@ export const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.isAuthenticated = false;
-      Cookies.remove('accessToken');
+      Cookies.remove('accessToken', { path: '/' });
     },
   },
 });

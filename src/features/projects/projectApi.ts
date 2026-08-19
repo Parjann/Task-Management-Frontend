@@ -5,17 +5,27 @@ export const projectApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProjects: builder.query<Project[], void>({
       query: () => '/projects',
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({ type: 'Project' as const, id })),
-              { type: 'Project', id: 'LIST' },
-            ]
-          : [{ type: 'Project', id: 'LIST' }],
+      transformResponse: (response: any): Project[] => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.projects)) return response.projects;
+        if (Array.isArray(response?.data)) return response.data;
+        if (response?.project) return [response.project];
+        return [];
+      },
+      providesTags: (result) => [
+        { type: 'Project', id: 'LIST' },
+        ...(result ?? []).map((project) => ({
+          type: 'Project' as const,
+          id: project.id,
+        })),
+      ],
     }),
 
     getProjectById: builder.query<Project, string>({
       query: (id) => `/projects/${id}`,
+      transformResponse: (response: any): Project => {
+        return response?.project || response?.data || response;
+      },
       providesTags: (_result, _error, id) => [{ type: 'Project', id }],
     }),
 
@@ -25,6 +35,9 @@ export const projectApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      transformResponse: (response: any): Project => {
+        return response?.project || response?.data || response;
+      },
       invalidatesTags: [{ type: 'Project', id: 'LIST' }],
     }),
 
@@ -37,6 +50,9 @@ export const projectApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body,
       }),
+      transformResponse: (response: any): Project => {
+        return response?.project || response?.data || response;
+      },
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Project', id },
         { type: 'Project', id: 'LIST' },
@@ -48,13 +64,24 @@ export const projectApi = baseApi.injectEndpoints({
         url: `/projects/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: [{ type: 'Project', id: 'LIST' }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Project', id },
+        { type: 'Project', id: 'LIST' },
+        { type: 'Task', id: `PROJECT-${id}` },
+        { type: 'Task', id: 'LIST' },
+      ],
     }),
 
     getProjectMembers: builder.query<ProjectMember[], string>({
       query: (projectId) => `/projects/${projectId}/members`,
+      transformResponse: (response: any): ProjectMember[] => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.members)) return response.members;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
       providesTags: (_result, _error, projectId) => [
-        { type: 'Project', id: `MEMBERS_${projectId}` },
+        { type: 'ProjectMember', id: projectId },
       ],
     }),
   }),

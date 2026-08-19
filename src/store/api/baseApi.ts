@@ -24,6 +24,7 @@ export const baseApi = createApi({
     'Auth',
     'User',
     'Project',
+    'ProjectMember',
     'Task',
     'Subtask',
     'Comment',

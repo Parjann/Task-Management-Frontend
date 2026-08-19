@@ -21,23 +21,36 @@ export const taskApi = baseApi.injectEndpoints({
         priority?: string;
         assigneeId?: string;
         search?: string;
-      }
+      } | void
     >({
       query: (params) => ({
         url: '/tasks',
-        params,
+        params: params || undefined,
       }),
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({ type: 'Task' as const, id })),
-              { type: 'Task', id: 'LIST' },
-            ]
-          : [{ type: 'Task', id: 'LIST' }],
+      transformResponse: (response: any): Task[] => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        if (Array.isArray(response?.tasks)) return response.tasks;
+        if (response?.task) return [response.task];
+        return [];
+      },
+      providesTags: (result, _error, arg) => [
+        {
+          type: 'Task',
+          id: arg?.projectId ? `PROJECT-${arg.projectId}` : 'LIST',
+        },
+        ...(result ?? []).map((task) => ({
+          type: 'Task' as const,
+          id: task.id,
+        })),
+      ],
     }),
 
     getTaskById: builder.query<Task, string>({
       query: (id) => `/tasks/${id}`,
+      transformResponse: (response: any): Task => {
+        return response?.task || response?.data || response;
+      },
       providesTags: (_result, _error, id) => [{ type: 'Task', id }],
     }),
 
@@ -47,46 +60,84 @@ export const taskApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: [{ type: 'Task', id: 'LIST' }],
+      transformResponse: (response: any): Task => {
+        return response?.task || response?.data || response;
+      },
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: 'Task', id: `PROJECT-${projectId}` },
+        { type: 'Task', id: 'LIST' },
+        { type: 'Project', id: projectId },
+      ],
     }),
 
-    updateTask: builder.mutation<Task, { id: string; body: UpdateTaskDto }>({
+    updateTask: builder.mutation<
+      Task,
+      { id: string; body: UpdateTaskDto; projectId?: string }
+    >({
       query: ({ id, body }) => ({
         url: `/tasks/${id}`,
         method: 'PATCH',
         body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [
+      transformResponse: (response: any): Task => {
+        return response?.task || response?.data || response;
+      },
+      invalidatesTags: (_result, _error, { id, projectId }) => [
         { type: 'Task', id },
+        ...(projectId ? [{ type: 'Task' as const, id: `PROJECT-${projectId}` }] : []),
         { type: 'Task', id: 'LIST' },
       ],
     }),
 
-    moveTask: builder.mutation<Task, { id: string; body: MoveTaskDto }>({
+    moveTask: builder.mutation<
+      Task,
+      { id: string; body: MoveTaskDto; projectId?: string }
+    >({
       query: ({ id, body }) => ({
         url: `/tasks/${id}/move`,
         method: 'PATCH',
         body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [
+      transformResponse: (response: any): Task => {
+        return response?.task || response?.data || response;
+      },
+      invalidatesTags: (_result, _error, { id, projectId }) => [
         { type: 'Task', id },
+        ...(projectId ? [{ type: 'Task' as const, id: `PROJECT-${projectId}` }] : []),
         { type: 'Task', id: 'LIST' },
       ],
     }),
 
-    deleteTask: builder.mutation<{ message: string }, string>({
-      query: (id) => ({
-        url: `/tasks/${id}`,
+    deleteTask: builder.mutation<
+      { message: string },
+      { id: string; projectId?: string } | string
+    >({
+      query: (arg) => ({
+        url: `/tasks/${typeof arg === 'string' ? arg : arg.id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: [{ type: 'Task', id: 'LIST' }],
+      invalidatesTags: (_result, _error, arg) => {
+        const id = typeof arg === 'string' ? arg : arg.id;
+        const projectId = typeof arg === 'string' ? undefined : arg.projectId;
+        return [
+          { type: 'Task', id },
+          ...(projectId ? [{ type: 'Task' as const, id: `PROJECT-${projectId}` }] : []),
+          { type: 'Task', id: 'LIST' },
+        ];
+      },
     }),
 
     // Subtasks
     getSubtasks: builder.query<Subtask[], string>({
       query: (taskId) => `/tasks/${taskId}/subtasks`,
+      transformResponse: (response: any): Subtask[] => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.subtasks)) return response.subtasks;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
       providesTags: (_result, _error, taskId) => [
-        { type: 'Subtask', id: `LIST_${taskId}` },
+        { type: 'Subtask', id: taskId },
       ],
     }),
 
@@ -99,8 +150,11 @@ export const taskApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      transformResponse: (response: any): Subtask => {
+        return response?.subtask || response?.data || response;
+      },
       invalidatesTags: (_result, _error, { taskId }) => [
-        { type: 'Subtask', id: `LIST_${taskId}` },
+        { type: 'Subtask', id: taskId },
         { type: 'Task', id: taskId },
       ],
     }),
@@ -114,9 +168,12 @@ export const taskApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body,
       }),
+      transformResponse: (response: any): Subtask => {
+        return response?.subtask || response?.data || response;
+      },
       invalidatesTags: (_result, _error, { id, taskId }) => [
         { type: 'Subtask', id },
-        ...(taskId ? [{ type: 'Subtask' as const, id: `LIST_${taskId}` }] : []),
+        ...(taskId ? [{ type: 'Subtask' as const, id: taskId }] : []),
       ],
     }),
 
@@ -130,15 +187,21 @@ export const taskApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { id, taskId }) => [
         { type: 'Subtask', id },
-        ...(taskId ? [{ type: 'Subtask' as const, id: `LIST_${taskId}` }] : []),
+        ...(taskId ? [{ type: 'Subtask' as const, id: taskId }] : []),
       ],
     }),
 
     // Comments
     getComments: builder.query<Comment[], string>({
       query: (taskId) => `/tasks/${taskId}/comments`,
+      transformResponse: (response: any): Comment[] => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.comments)) return response.comments;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
       providesTags: (_result, _error, taskId) => [
-        { type: 'Comment', id: `LIST_${taskId}` },
+        { type: 'Comment', id: taskId },
       ],
     }),
 
@@ -151,8 +214,11 @@ export const taskApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      transformResponse: (response: any): Comment => {
+        return response?.comment || response?.data || response;
+      },
       invalidatesTags: (_result, _error, { taskId }) => [
-        { type: 'Comment', id: `LIST_${taskId}` },
+        { type: 'Comment', id: taskId },
         { type: 'Activity', id: 'LIST' },
       ],
     }),
@@ -167,7 +233,7 @@ export const taskApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { id, taskId }) => [
         { type: 'Comment', id },
-        ...(taskId ? [{ type: 'Comment' as const, id: `LIST_${taskId}` }] : []),
+        ...(taskId ? [{ type: 'Comment' as const, id: taskId }] : []),
       ],
     }),
   }),

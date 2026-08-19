@@ -14,22 +14,60 @@ import {
   useMoveTaskMutation,
   useDeleteTaskMutation,
 } from '../taskApi';
-import { useGetProjectsQuery, useCreateProjectMutation } from '@/features/projects';
+import {
+  useGetProjectsQuery,
+  useCreateProjectMutation,
+  setSelectedProjectId,
+} from '@/features/projects';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { FeedbackToast, ToastMessage } from '@/components/ui/feedback-toast';
 
-export function KanbanBoard() {
+interface KanbanBoardProps {
+  projectId?: string;
+}
+
+export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
+  const dispatch = useAppDispatch();
+  const reduxSelectedProjectId = useAppSelector(
+    (state) => state.projects.selectedProjectId,
+  );
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [targetColumnStatus, setTargetColumnStatus] =
     useState<TaskStatus>('TODO');
+  const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // RTK Query API Hooks (Live Database Data Only)
-  const { data: apiTasks = [], isLoading: isTasksLoading } = useGetTasksQuery(
-    { search: searchQuery || undefined },
-    { refetchOnMountOrArgChange: true },
-  );
+  const showToast = (toastData: ToastMessage) => {
+    setToast(toastData);
+    setTimeout(() => {
+      setToast((current) =>
+        current?.message === toastData.message ? null : current,
+      );
+    }, 4000);
+  };
+
   const { data: apiProjects = [] } = useGetProjectsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
+
+  const projectList = Array.isArray(apiProjects) ? apiProjects : [];
+  const activeProjectId =
+    propProjectId || reduxSelectedProjectId || projectList[0]?.id;
+
+  // RTK Query API Hook: Project-scoped task query with strict skip guard
+  const { data: apiTasks = [], isLoading: isTasksLoading } = useGetTasksQuery(
+    activeProjectId
+      ? {
+          projectId: activeProjectId,
+          search: searchQuery || undefined,
+        }
+      : undefined,
+    {
+      refetchOnMountOrArgChange: true,
+      skip: !activeProjectId,
+    },
+  );
 
   const [createTaskMutation] = useCreateTaskMutation();
   const [createProjectMutation] = useCreateProjectMutation();
@@ -80,18 +118,31 @@ export function KanbanBoard() {
     label: string;
   }) => {
     try {
-      let projectId = apiProjects[0]?.id;
-      if (!projectId) {
-        const newProj = await createProjectMutation({
+      let targetProjectId = activeProjectId;
+
+      if (!targetProjectId) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const randKey =
+          'MAIN' +
+          alphabet[Math.floor(Math.random() * alphabet.length)] +
+          alphabet[Math.floor(Math.random() * alphabet.length)];
+        const newProj: any = await createProjectMutation({
           name: 'Main Workspace',
-          key: 'MAIN',
+          key: randKey.slice(0, 6),
           description: 'Default project workspace',
         }).unwrap();
-        projectId = newProj.id;
+        targetProjectId = newProj?.id || newProj?.project?.id;
+        if (targetProjectId) {
+          dispatch(setSelectedProjectId(targetProjectId));
+        }
+      }
+
+      if (!targetProjectId) {
+        throw new Error('Project ID is required to create a task.');
       }
 
       await createTaskMutation({
-        projectId,
+        projectId: targetProjectId,
         title: newTaskData.title,
         status: newTaskData.status,
         priority: newTaskData.priority,
@@ -101,16 +152,43 @@ export function KanbanBoard() {
       }).unwrap();
 
       setIsCreateModalOpen(false);
-    } catch (err) {
-      console.error('Failed to create task:', err);
+      showToast({
+        type: 'success',
+        title: 'Task Created',
+        message: `Task "${newTaskData.title}" created successfully!`,
+      });
+    } catch (err: any) {
+      const errMsg =
+        err?.data?.message ||
+        err?.message ||
+        'Failed to create task. Please try again.';
+      showToast({
+        type: 'error',
+        title: 'Creation Failed',
+        message: Array.isArray(errMsg) ? errMsg.join(', ') : errMsg,
+      });
     }
   };
 
   const handleDeleteTask = async (id: string) => {
     try {
-      await deleteTaskMutation(id).unwrap();
-    } catch (err) {
-      console.error('Failed to delete task:', err);
+      await deleteTaskMutation({
+        id,
+        projectId: activeProjectId,
+      }).unwrap();
+      showToast({
+        type: 'success',
+        title: 'Task Deleted',
+        message: 'Task removed successfully.',
+      });
+    } catch (err: any) {
+      const errMsg =
+        err?.data?.message || err?.message || 'Failed to delete task.';
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: Array.isArray(errMsg) ? errMsg.join(', ') : errMsg,
+      });
     }
   };
 
@@ -120,14 +198,14 @@ export function KanbanBoard() {
       // 1. Search Query Filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchesTitle = task.title.toLowerCase().includes(q);
+        const matchesTitle = task.title?.toLowerCase().includes(q);
         const matchesCreator = (task.creator?.name || '')
           .toLowerCase()
           .includes(q);
         const matchesAssignee = (task.assignee?.name || '')
           .toLowerCase()
           .includes(q);
-        const matchesPriority = task.priority.toLowerCase().includes(q);
+        const matchesPriority = task.priority?.toLowerCase().includes(q);
         if (
           !matchesTitle &&
           !matchesCreator &&
@@ -179,7 +257,7 @@ export function KanbanBoard() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans relative">
       {/* Top Header Row with Title, Action buttons, Search and Filter */}
       <TaskHeader
         onAddTask={() => handleOpenAddModal('TODO')}
@@ -234,6 +312,9 @@ export function KanbanBoard() {
         onSubmit={handleCreateTask}
         defaultStatus={targetColumnStatus}
       />
+
+      {/* Feedback Toast */}
+      <FeedbackToast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }
