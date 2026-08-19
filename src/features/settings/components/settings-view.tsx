@@ -11,7 +11,7 @@ export function SettingsView() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <div className="flex w-full min-h-screen bg-[#FAFAFA] font-sans overflow-hidden">
+    <div className="flex w-full min-h-screen bg-[#FAFAFA] dark:bg-[#09090B] font-sans overflow-hidden">
       {/* Settings Left Sidebar */}
       <SettingsSidebar
         activeTab={activeTab}
@@ -21,7 +21,7 @@ export function SettingsView() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-8 md:p-12">
+      <main className="flex-1 overflow-y-auto p-8 md:p-12 bg-[#FAFAFA] dark:bg-[#09090B]">
         {activeTab === 'profile' && <ProfileTab />}
         {activeTab === 'theme' && <ThemeTab />}
         {activeTab === 'color' && <ColorTab />}

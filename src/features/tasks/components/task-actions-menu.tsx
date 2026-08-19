@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Copy, CheckCircle, CopyPlus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Copy, CheckCircle, CopyPlus, Trash2, Check } from 'lucide-react';
 
 interface TaskActionsMenuProps {
   isOpen: boolean;
@@ -22,7 +22,27 @@ export function TaskActionsMenu({
   onDelete,
   align = 'right',
 }: TaskActionsMenuProps) {
+  const [copied, setCopied] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onCopyLink?.();
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+      onClose();
+    }, 600);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onDelete?.();
+    onClose();
+  };
 
   return (
     <>
@@ -35,26 +55,32 @@ export function TaskActionsMenu({
       />
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`absolute top-8 z-50 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none ${
+        className={`absolute top-8 z-50 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans ${
           align === 'right' ? 'right-0' : 'left-0'
         }`}
       >
         <button
           type="button"
-          onClick={() => {
-            onCopyLink?.();
-            onClose();
-          }}
-          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+          onClick={handleCopy}
+          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
         >
-          <Copy className="w-3.5 h-3.5 text-[#9CA3AF]" />
-          <span>Copy Link</span>
+          <div className="flex items-center gap-2">
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-[#9CA3AF]" />
+            )}
+            <span className={copied ? 'text-emerald-600 font-semibold' : ''}>
+              {copied ? 'Link Copied!' : 'Copy Link'}
+            </span>
+          </div>
         </button>
 
         {onToggleComplete && (
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               onToggleComplete();
               onClose();
             }}
@@ -68,7 +94,8 @@ export function TaskActionsMenu({
         {onDuplicate && (
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               onDuplicate();
               onClose();
             }}
@@ -84,11 +111,8 @@ export function TaskActionsMenu({
             <div className="h-px bg-[#F3F4F6] my-1" />
             <button
               type="button"
-              onClick={() => {
-                onDelete();
-                onClose();
-              }}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+              onClick={handleDelete}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5 text-red-500" />
               <span>Delete</span>

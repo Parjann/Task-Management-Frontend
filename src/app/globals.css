@@ -96,7 +96,9 @@
 /* ========================================================= */
 /* DARK MODE OVERRIDES (INSTANT REACTIVE THEMING)            */
 /* ========================================================= */
-.dark body {
+.dark body,
+.dark main,
+.dark .bg-\[\#FAFAFA\] {
   background-color: #09090B !important;
   color: #F9FAFB !important;
 }

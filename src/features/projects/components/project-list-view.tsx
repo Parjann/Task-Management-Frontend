@@ -36,37 +36,6 @@ export interface ProjectItem {
   dueDate: string;
 }
 
-const INITIAL_PROJECTS: ProjectItem[] = [
-  {
-    id: 'p-1',
-    name: 'Design Homepage',
-    priority: 'HIGH',
-    status: 'TODO',
-    leadName: 'Dexter',
-    leadAvatar:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-    dueDate: '12 Sep 2026',
-  },
-  {
-    id: 'p-2',
-    name: 'Develop Login Feature',
-    priority: 'LOW',
-    status: 'IN_PROGRESS',
-    leadName: 'Carl Nuñez',
-    leadAvatar: null,
-    dueDate: '15 Sep 2026',
-  },
-  {
-    id: 'p-3',
-    name: 'Test Payment Gateway',
-    priority: 'MEDIUM',
-    status: 'DONE',
-    leadName: null,
-    leadAvatar: null,
-    dueDate: '18 Sep 2026',
-  },
-];
-
 import {
   useGetProjectsQuery,
   useCreateProjectMutation,
@@ -75,35 +44,31 @@ import {
 
 export function ProjectListView() {
   const router = useRouter();
-  const [localProjects, setLocalProjects] =
-    useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(
     Boolean(searchQuery),
   );
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // RTK Query API Hooks
-  const { data: apiProjects } = useGetProjectsQuery(undefined, {
+  // RTK Query API Hooks (Live Database Data Only)
+  const { data: apiProjects = [], isLoading } = useGetProjectsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
   const [createProjectMutation] = useCreateProjectMutation();
   const [deleteProjectMutation] = useDeleteProjectMutation();
 
-  const projects = useMemo(() => {
-    if (apiProjects && apiProjects.length > 0) {
-      return apiProjects.map((p) => ({
-        id: p.id,
-        name: p.name,
-        priority: 'HIGH' as TaskPriority,
-        status: 'TODO' as TaskStatus,
-        leadName: p.owner?.name || 'Dexter',
-        leadAvatar: p.owner?.avatarUrl || null,
-        dueDate: '12 Sep 2026',
-      }));
-    }
-    return localProjects;
-  }, [apiProjects, localProjects]);
+  const projects: ProjectItem[] = useMemo(() => {
+    if (!Array.isArray(apiProjects)) return [];
+    return apiProjects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      priority: 'HIGH' as TaskPriority,
+      status: 'TODO' as TaskStatus,
+      leadName: p.owner?.name || 'Dexter',
+      leadAvatar: p.owner?.avatarUrl || null,
+      dueDate: '12 Sep 2026',
+    }));
+  }, [apiProjects]);
 
   // Keyboard shortcut listener (Cmd+F / Ctrl+F)
   useEffect(() => {
@@ -214,21 +179,6 @@ export function ProjectListView() {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
-    const newProj: ProjectItem = {
-      id: `p-${Date.now()}`,
-      name: newProjectName.trim(),
-      priority: newPriority,
-      status: newStatus,
-      leadName: 'Dexter',
-      leadAvatar:
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-      dueDate: newDueDate,
-    };
-
-    setLocalProjects((prev) => [...prev, newProj]);
-    setNewProjectName('');
-    setIsAddModalOpen(false);
-
     try {
       const generatedKey =
         newProjectName
@@ -242,17 +192,19 @@ export function ProjectListView() {
         key: generatedKey,
         description: 'New Project',
       }).unwrap();
-    } catch {
-      // Optimistic local state remains
+
+      setNewProjectName('');
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error('Failed to create project:', err);
     }
   };
 
   const handleDeleteProject = async (id: string) => {
-    setLocalProjects((prev) => prev.filter((p) => p.id !== id));
     try {
       await deleteProjectMutation(id).unwrap();
-    } catch {
-      // Handled
+    } catch (err) {
+      console.error('Failed to delete project:', err);
     }
   };
 

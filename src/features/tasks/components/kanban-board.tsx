@@ -12,239 +12,31 @@ import {
   useGetTasksQuery,
   useCreateTaskMutation,
   useMoveTaskMutation,
+  useDeleteTaskMutation,
 } from '../taskApi';
-
-// Initial sample data replicating Figma designs with full fidelity
-const INITIAL_TASKS: Task[] = [
-  // --- TO DO COLUMN ---
-  {
-    id: 't-1',
-    projectId: 'p-1',
-    taskNumber: 1,
-    title: 'Design Homepage',
-    status: 'TODO',
-    priority: 'HIGH',
-    orderIndex: 0,
-    dueDate: '2026-09-12T12:00:00Z',
-    creatorId: 'u-admin',
-    creator: {
-      id: 'u-admin',
-      name: 'Dexter',
-      email: 'dexter@taskflow.com',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-      isGuest: false,
-      createdAt: '',
-      updatedAt: '',
-    },
-    labels: [
-      { id: 'l1', taskId: 't-1', labelId: 'lbl-1', label: { id: 'lbl-1', name: 'Design', color: '#6B7280' } },
-      { id: 'l2', taskId: 't-1', labelId: 'lbl-2', label: { id: 'lbl-2', name: 'UI', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-20T10:00:00Z',
-    updatedAt: '2026-07-20T10:00:00Z',
-  },
-  {
-    id: 't-2',
-    projectId: 'p-1',
-    taskNumber: 2,
-    title: 'Develop Login Feature',
-    status: 'TODO',
-    priority: 'LOW',
-    orderIndex: 1,
-    dueDate: '2026-09-15T12:00:00Z',
-    creatorId: 'u-cn',
-    creator: {
-      id: 'u-cn',
-      name: 'Carl Nuñez',
-      email: 'carl@taskflow.com',
-      isGuest: false,
-      createdAt: '',
-      updatedAt: '',
-    },
-    labels: [
-      { id: 'l3', taskId: 't-2', labelId: 'lbl-3', label: { id: 'lbl-3', name: 'Auth', color: '#6B7280' } },
-      { id: 'l4', taskId: 't-2', labelId: 'lbl-4', label: { id: 'lbl-4', name: 'Frontend', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-21T10:00:00Z',
-    updatedAt: '2026-07-21T10:00:00Z',
-  },
-  {
-    id: 't-3',
-    projectId: 'p-1',
-    taskNumber: 3,
-    title: 'Test Payment Gateway',
-    status: 'TODO',
-    priority: 'MEDIUM',
-    orderIndex: 2,
-    dueDate: '2026-09-18T12:00:00Z',
-    creatorId: 'u-admin',
-    creator: { id: 'u-admin', name: 'Admin', email: 'admin@taskflow.com', isGuest: false, createdAt: '', updatedAt: '' },
-    labels: [
-      { id: 'l5', taskId: 't-3', labelId: 'lbl-5', label: { id: 'lbl-5', name: 'Payment', color: '#6B7280' } },
-      { id: 'l6', taskId: 't-3', labelId: 'lbl-6', label: { id: 'lbl-6', name: 'Testing', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-22T10:00:00Z',
-    updatedAt: '2026-07-22T10:00:00Z',
-  },
-
-  // --- DOING COLUMN ---
-  {
-    id: 't-4',
-    projectId: 'p-1',
-    taskNumber: 4,
-    title: 'Design Homepage',
-    status: 'IN_PROGRESS',
-    priority: 'HIGH',
-    orderIndex: 0,
-    dueDate: '2026-09-12T12:00:00Z',
-    creatorId: 'u-admin',
-    creator: {
-      id: 'u-admin',
-      name: 'Dexter',
-      email: 'dexter@taskflow.com',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-      isGuest: false,
-      createdAt: '',
-      updatedAt: '',
-    },
-    labels: [
-      { id: 'l7', taskId: 't-4', labelId: 'lbl-1', label: { id: 'lbl-1', name: 'Design', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-22T11:00:00Z',
-    updatedAt: '2026-07-22T11:00:00Z',
-  },
-  {
-    id: 't-5',
-    projectId: 'p-1',
-    taskNumber: 5,
-    title: 'Develop Login Feature',
-    status: 'IN_PROGRESS',
-    priority: 'LOW',
-    orderIndex: 1,
-    dueDate: '2026-09-15T12:00:00Z',
-    creatorId: 'u-cn',
-    creator: {
-      id: 'u-cn',
-      name: 'Carl Nuñez',
-      email: 'carl@taskflow.com',
-      isGuest: false,
-      createdAt: '',
-      updatedAt: '',
-    },
-    labels: [
-      { id: 'l8', taskId: 't-5', labelId: 'lbl-3', label: { id: 'lbl-3', name: 'Auth', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-23T11:00:00Z',
-    updatedAt: '2026-07-23T11:00:00Z',
-  },
-  {
-    id: 't-6',
-    projectId: 'p-1',
-    taskNumber: 6,
-    title: 'Test Payment Gateway',
-    status: 'IN_PROGRESS',
-    priority: 'MEDIUM',
-    orderIndex: 2,
-    dueDate: '2026-09-18T12:00:00Z',
-    creatorId: 'u-admin',
-    creator: { id: 'u-admin', name: 'Admin', email: 'admin@taskflow.com', isGuest: false, createdAt: '', updatedAt: '' },
-    labels: [
-      { id: 'l9', taskId: 't-6', labelId: 'lbl-5', label: { id: 'lbl-5', name: 'Payment', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-23T12:00:00Z',
-    updatedAt: '2026-07-23T12:00:00Z',
-  },
-
-  // --- COMPLETED COLUMN ---
-  {
-    id: 't-7',
-    projectId: 'p-1',
-    taskNumber: 7,
-    title: 'Design Homepage',
-    status: 'DONE',
-    priority: 'HIGH',
-    orderIndex: 0,
-    dueDate: '2026-09-12T12:00:00Z',
-    creatorId: 'u-admin',
-    creator: {
-      id: 'u-admin',
-      name: 'Dexter',
-      email: 'dexter@taskflow.com',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-      isGuest: false,
-      createdAt: '',
-      updatedAt: '',
-    },
-    labels: [
-      { id: 'l10', taskId: 't-7', labelId: 'lbl-1', label: { id: 'lbl-1', name: 'Design', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-24T12:00:00Z',
-    updatedAt: '2026-07-24T12:00:00Z',
-  },
-  {
-    id: 't-8',
-    projectId: 'p-1',
-    taskNumber: 8,
-    title: 'Develop Login Feature',
-    status: 'DONE',
-    priority: 'LOW',
-    orderIndex: 1,
-    dueDate: '2026-09-15T12:00:00Z',
-    creatorId: 'u-cn',
-    creator: {
-      id: 'u-cn',
-      name: 'Carl Nuñez',
-      email: 'carl@taskflow.com',
-      isGuest: false,
-      createdAt: '',
-      updatedAt: '',
-    },
-    labels: [
-      { id: 'l11', taskId: 't-8', labelId: 'lbl-3', label: { id: 'lbl-3', name: 'Auth', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-25T12:00:00Z',
-    updatedAt: '2026-07-25T12:00:00Z',
-  },
-  {
-    id: 't-9',
-    projectId: 'p-1',
-    taskNumber: 9,
-    title: 'Test Payment Gateway',
-    status: 'DONE',
-    priority: 'MEDIUM',
-    orderIndex: 2,
-    dueDate: '2026-09-18T12:00:00Z',
-    creatorId: 'u-admin',
-    creator: { id: 'u-admin', name: 'Admin', email: 'admin@taskflow.com', isGuest: false, createdAt: '', updatedAt: '' },
-    labels: [
-      { id: 'l12', taskId: 't-9', labelId: 'lbl-5', label: { id: 'lbl-5', name: 'Payment', color: '#6B7280' } },
-    ],
-    createdAt: '2026-07-26T12:00:00Z',
-    updatedAt: '2026-07-26T12:00:00Z',
-  },
-];
+import { useGetProjectsQuery, useCreateProjectMutation } from '@/features/projects';
 
 export function KanbanBoard() {
-  const [localTasks, setLocalTasks] = useState<Task[]>(INITIAL_TASKS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [targetColumnStatus, setTargetColumnStatus] =
     useState<TaskStatus>('TODO');
 
-  // RTK Query API Hooks
-  const { data: apiTasks, isLoading: isApiLoading } = useGetTasksQuery(
+  // RTK Query API Hooks (Live Database Data Only)
+  const { data: apiTasks = [], isLoading: isTasksLoading } = useGetTasksQuery(
     { search: searchQuery || undefined },
     { refetchOnMountOrArgChange: true },
   );
-  const [createTaskMutation] = useCreateTaskMutation();
+  const { data: apiProjects = [] } = useGetProjectsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
-  // Combine API tasks with fallback
-  const tasks = useMemo(() => {
-    if (apiTasks && apiTasks.length > 0) {
-      return apiTasks;
-    }
-    return localTasks;
-  }, [apiTasks, localTasks]);
+  const [createTaskMutation] = useCreateTaskMutation();
+  const [createProjectMutation] = useCreateProjectMutation();
+  const [deleteTaskMutation] = useDeleteTaskMutation();
+  const [moveTaskMutation] = useMoveTaskMutation();
+
+  const tasks = Array.isArray(apiTasks) ? apiTasks : [];
 
   // Fields and View Mode State
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
@@ -287,52 +79,38 @@ export function KanbanBoard() {
     dueDate: string;
     label: string;
   }) => {
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
-      projectId: 'p-1',
-      taskNumber: tasks.length + 1,
-      title: newTaskData.title,
-      status: newTaskData.status,
-      priority: newTaskData.priority,
-      orderIndex: tasks.length,
-      dueDate: newTaskData.dueDate,
-      creatorId: 'u-current',
-      creator: {
-        id: 'u-current',
-        name: newTaskData.assigneeName || 'Dexter',
-        email: 'user@taskflow.com',
-        isGuest: false,
-        createdAt: '',
-        updatedAt: '',
-      },
-      labels: [
-        {
-          id: `lbl-${Date.now()}-1`,
-          taskId: `task-${Date.now()}`,
-          labelId: 'lbl-custom',
-          label: {
-            id: 'lbl-custom',
-            name: newTaskData.label || 'Deployment',
-            color: '#6B7280',
-          },
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setLocalTasks((prev) => [...prev, newTask]);
-
     try {
+      let projectId = apiProjects[0]?.id;
+      if (!projectId) {
+        const newProj = await createProjectMutation({
+          name: 'Main Workspace',
+          key: 'MAIN',
+          description: 'Default project workspace',
+        }).unwrap();
+        projectId = newProj.id;
+      }
+
       await createTaskMutation({
-        projectId: 'p-1',
+        projectId,
         title: newTaskData.title,
         status: newTaskData.status,
         priority: newTaskData.priority,
-        dueDate: newTaskData.dueDate,
+        dueDate: newTaskData.dueDate
+          ? new Date(newTaskData.dueDate).toISOString()
+          : undefined,
       }).unwrap();
-    } catch {
-      // Optimistic state remains in local fallback
+
+      setIsCreateModalOpen(false);
+    } catch (err) {
+      console.error('Failed to create task:', err);
+    }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    try {
+      await deleteTaskMutation(id).unwrap();
+    } catch (err) {
+      console.error('Failed to delete task:', err);
     }
   };
 
@@ -434,6 +212,7 @@ export function KanbanBoard() {
                 tasks={colTasks}
                 visibleFields={visibleFields}
                 onAddTask={handleOpenAddModal}
+                onDeleteTask={handleDeleteTask}
               />
             );
           })}
@@ -443,6 +222,7 @@ export function KanbanBoard() {
           <TaskListView
             tasks={filteredTasks}
             onAddTask={handleOpenAddModal}
+            onDeleteTask={handleDeleteTask}
           />
         </div>
       )}

@@ -12,6 +12,7 @@ interface KanbanColumnProps {
   tasks: Task[];
   visibleFields?: VisibleFields;
   onAddTask?: (status: TaskStatus) => void;
+  onDeleteTask?: (id: string) => void;
 }
 
 export function KanbanColumn({
@@ -20,6 +21,7 @@ export function KanbanColumn({
   tasks,
   visibleFields,
   onAddTask,
+  onDeleteTask,
 }: KanbanColumnProps) {
   return (
     <div className="bg-[#F9FAFB] border border-[#E5E7EB]/80 rounded-2xl p-3.5 w-[310px] min-w-[310px] flex flex-col max-h-full">
@@ -52,7 +54,12 @@ export function KanbanColumn({
       {/* Cards List */}
       <div className="space-y-3 overflow-y-auto flex-1 pr-0.5 pb-2">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} visibleFields={visibleFields} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            visibleFields={visibleFields}
+            onDelete={onDeleteTask}
+          />
         ))}
       </div>
 
