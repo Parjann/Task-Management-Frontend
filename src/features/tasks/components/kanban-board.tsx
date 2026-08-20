@@ -53,19 +53,16 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
 
   const projectList = Array.isArray(apiProjects) ? apiProjects : [];
   const activeProjectId =
-    propProjectId || reduxSelectedProjectId || projectList[0]?.id;
+    propProjectId || reduxSelectedProjectId;
 
-  // RTK Query API Hook: Project-scoped task query with strict skip guard
+  // RTK Query API Hook: Fetch all tasks (or filter by project if selected)
   const { data: apiTasks = [], isLoading: isTasksLoading } = useGetTasksQuery(
-    activeProjectId
-      ? {
-          projectId: activeProjectId,
-          search: searchQuery || undefined,
-        }
-      : undefined,
+    {
+      ...(activeProjectId ? { projectId: activeProjectId } : {}),
+      ...(searchQuery ? { search: searchQuery } : {}),
+    },
     {
       refetchOnMountOrArgChange: true,
-      skip: !activeProjectId,
     },
   );
 
@@ -174,7 +171,7 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
     try {
       await deleteTaskMutation({
         id,
-        projectId: activeProjectId,
+        projectId: activeProjectId ?? undefined,
       }).unwrap();
       showToast({
         type: 'success',

@@ -23,11 +23,10 @@ export function FeedbackToast({ toast, onClose }: FeedbackToastProps) {
   return (
     <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full animate-in fade-in slide-in-from-bottom-4 duration-200 select-none">
       <div
-        className={`p-4 rounded-2xl shadow-2xl border flex items-start gap-3 backdrop-blur-md ${
-          isSuccess
+        className={`p-4 rounded-2xl shadow-2xl border flex items-start gap-3 backdrop-blur-md ${isSuccess
             ? 'bg-[#18181B] text-white border-zinc-800'
             : 'bg-red-950/95 text-white border-red-800/80 shadow-red-950/20'
-        }`}
+          }`}
       >
         <div className="mt-0.5 flex-shrink-0">
           {isSuccess ? (
