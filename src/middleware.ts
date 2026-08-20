@@ -12,9 +12,9 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/tasks') ||
     pathname.startsWith('/settings');
 
-  // If user is authenticated and tries to access login/register/root, redirect to dashboard
+  // If user is authenticated and tries to access login/register/root, redirect to tasks
   if (token && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/tasks', request.url));
   }
 
   // If user is not authenticated and tries to access protected dashboard routes, redirect to login

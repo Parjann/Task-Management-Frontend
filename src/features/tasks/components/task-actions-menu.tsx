@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Copy, CheckCircle, CopyPlus, Trash2, Check } from 'lucide-react';
 
 interface TaskActionsMenuProps {
@@ -11,6 +11,8 @@ interface TaskActionsMenuProps {
   onToggleComplete?: () => void;
   onDelete?: () => void;
   align?: 'left' | 'right';
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
+  useFixedPosition?: boolean;
 }
 
 export function TaskActionsMenu({
@@ -21,8 +23,21 @@ export function TaskActionsMenu({
   onToggleComplete,
   onDelete,
   align = 'right',
+  triggerRef,
+  useFixedPosition = false,
 }: TaskActionsMenuProps) {
   const [copied, setCopied] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (isOpen && useFixedPosition && triggerRef?.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + 4,
+        left: rect.right - 176, // 176px = w-44 (11rem)
+      });
+    }
+  }, [isOpen, useFixedPosition, triggerRef]);
 
   if (!isOpen) return null;
 
@@ -55,9 +70,16 @@ export function TaskActionsMenu({
       />
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`absolute top-8 z-50 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans ${
-          align === 'right' ? 'right-0' : 'left-0'
+        className={`${
+          useFixedPosition ? 'fixed' : 'absolute top-8'
+        } z-50 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans ${
+          !useFixedPosition ? (align === 'right' ? 'right-0' : 'left-0') : ''
         }`}
+        style={
+          useFixedPosition && pos
+            ? { top: pos.top, left: pos.left }
+            : undefined
+        }
       >
         <button
           type="button"

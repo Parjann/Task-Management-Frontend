@@ -29,7 +29,7 @@ export function GoogleLoginButton({
       const { idToken } = await signInWithGoogle();
       await googleLogin({ idToken }).unwrap();
       onSuccess?.();
-      router.push('/dashboard');
+      router.push('/tasks');
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'data' in err

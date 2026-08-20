@@ -58,16 +58,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
   };
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-40"
-        onClick={() => {
-          setActiveSubmenu(null);
-          onClose();
-        }}
-      />
-
-      <div className="absolute top-16 left-3 z-50 w-56 bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans">
+    <div className="absolute top-16 left-3 z-50 w-56 bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans">
         {/* User Card Header matching Figma */}
         <div className="flex flex-col items-center text-center pb-4 border-b border-[#F3F4F6]">
           {displayAvatar ? (
@@ -242,8 +233,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
               <span>Sign Out</span>
             </button>
           </div>
-        </div>
       </div>
-    </>
+    </div>
   );
 }

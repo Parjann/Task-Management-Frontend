@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -23,6 +23,34 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
   const pathname = usePathname();
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown when clicking outside the menu or pressing Escape
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
 
   const { user } = useAppSelector((state) => state.auth);
   const { data: profile } = useGetProfileQuery(undefined, {
@@ -34,12 +62,12 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
   const displayAvatar = currentUser?.avatarUrl;
 
   const navItems = [
-    {
-      name: 'Dashboard',
-      href: '/dashboard',
-      icon: LayoutDashboard,
-      isActive: pathname === '/dashboard',
-    },
+    // {
+    //   name: 'Dashboard',
+    //   href: '/dashboard',
+    //   icon: LayoutDashboard,
+    //   isActive: pathname === '/dashboard',
+    // },
     {
       name: 'Tasks',
       href: '/tasks',
@@ -56,15 +84,14 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed lg:static top-0 left-0 z-40 h-screen bg-white border-r border-[#E5E7EB] flex flex-col font-sans transition-all duration-300 ease-in-out flex-shrink-0 select-none ${
-        isOpen
+      className={`fixed lg:static top-0 left-0 z-40 h-screen bg-white border-r border-[#E5E7EB] flex flex-col font-sans transition-all duration-300 ease-in-out flex-shrink-0 select-none ${isOpen
           ? 'w-64 opacity-100 translate-x-0 overflow-visible'
           : 'w-0 opacity-0 -translate-x-full border-r-0 overflow-hidden pointer-events-none'
-      }`}
+        }`}
     >
       <div className="w-64 h-full flex flex-col">
         {/* User / Workspace Dropdown Header */}
-        <div className="p-4 border-b border-transparent relative z-50">
+        <div ref={userMenuRef} className="p-4 border-b border-transparent relative z-50">
           <button
             type="button"
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -113,9 +140,8 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
             >
               <span>Workspace</span>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-[#9CA3AF] transition-transform duration-200 ${
-                  isWorkspaceOpen ? 'rotate-0' : '-rotate-90'
-                }`}
+                className={`w-3.5 h-3.5 text-[#9CA3AF] transition-transform duration-200 ${isWorkspaceOpen ? 'rotate-0' : '-rotate-90'
+                  }`}
               />
             </button>
 
@@ -128,16 +154,18 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] transition-colors ${
-                        item.isActive
+                      onClick={() => {
+                        // Auto-close sidebar on mobile when navigating
+                        if (window.innerWidth < 1024 && onClose) onClose();
+                      }}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] transition-colors ${item.isActive
                           ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
                           : 'text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827] font-medium'
-                      }`}
+                        }`}
                     >
                       <Icon
-                        className={`w-4 h-4 ${
-                          item.isActive ? 'text-[#111827]' : 'text-[#6B7280]'
-                        }`}
+                        className={`w-4 h-4 ${item.isActive ? 'text-[#111827]' : 'text-[#6B7280]'
+                          }`}
                       />
                       <span>{item.name}</span>
                     </Link>

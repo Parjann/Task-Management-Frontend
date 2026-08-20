@@ -121,7 +121,7 @@ export function ProfileTab() {
   }
 
   return (
-    <div className="max-w-3xl space-y-8 font-sans">
+    <div className="max-w-3xl space-y-6 sm:space-y-8 font-sans">
       {showSavedToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#18181B] text-white px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
           <Check className="w-4 h-4 text-emerald-400" />
@@ -130,7 +130,7 @@ export function ProfileTab() {
       )}
 
       <div>
-        <h1 className="text-[26px] md:text-[28px] font-bold text-[#111827] tracking-tight">
+        <h1 className="text-[24px] sm:text-[26px] md:text-[28px] font-bold text-[#111827] tracking-tight">
           Profile
         </h1>
         {errorMsg && (
@@ -140,8 +140,8 @@ export function ProfileTab() {
         )}
       </div>
 
-      <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] divide-y divide-[#F3F4F6]">
-        <div className="flex items-center justify-between pb-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] divide-y divide-[#F3F4F6]">
+        <div className="flex items-center justify-between pb-4 sm:pb-5">
           <span className="text-xs font-semibold text-[#374151]">
             Profile picture
           </span>
@@ -174,7 +174,7 @@ export function ProfileTab() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between py-5">
+        <div className="flex items-center justify-between py-4 sm:py-5">
           <span className="text-xs font-semibold text-[#374151]">Email</span>
           <button
             type="button"
@@ -182,14 +182,14 @@ export function ProfileTab() {
               setTempEmail(email);
               setIsEmailModalOpen(true);
             }}
-            className="flex items-center gap-2 text-xs text-[#111827] font-medium hover:text-[#6366F1] transition-colors group"
+            className="flex items-center gap-2 text-xs text-[#111827] font-medium hover:text-[#6366F1] transition-colors group truncate max-w-[200px] sm:max-w-none"
           >
-            <span>{email || '—'}</span>
-            <Pencil className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1]" />
+            <span className="truncate">{email || '—'}</span>
+            <Pencil className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#6366F1] flex-shrink-0" />
           </button>
         </div>
 
-        <div className="flex items-center justify-between py-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-4 sm:py-5">
           <span className="text-xs font-semibold text-[#374151]">Full name</span>
           <input
             type="text"
@@ -200,11 +200,11 @@ export function ProfileTab() {
                 void saveField({ name: fullName.trim() });
               }
             }}
-            className="w-64 px-4 py-2 rounded-xl bg-[#F3F4F6] border border-transparent text-xs text-[#111827] font-medium focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-colors"
+            className="w-full sm:w-64 px-4 py-2 rounded-xl bg-[#F3F4F6] border border-transparent text-xs text-[#111827] font-medium focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-colors"
           />
         </div>
 
-        <div className="flex items-center justify-between py-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-4 sm:py-5">
           <div>
             <p className="text-xs font-semibold text-[#374151]">Title</p>
             <p className="text-[11px] text-[#9CA3AF] mt-0.5">
@@ -220,11 +220,11 @@ export function ProfileTab() {
                 void saveField({ title: title.trim() || null });
               }
             }}
-            className="w-64 px-4 py-2 rounded-xl bg-[#F3F4F6] border border-transparent text-xs text-[#111827] font-medium focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-colors"
+            className="w-full sm:w-64 px-4 py-2 rounded-xl bg-[#F3F4F6] border border-transparent text-xs text-[#111827] font-medium focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-colors"
           />
         </div>
 
-        <div className="flex items-center justify-between pt-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 sm:pt-5">
           <div>
             <p className="text-xs font-semibold text-[#374151]">Username</p>
             <p className="text-[11px] text-[#9CA3AF] mt-0.5">
@@ -240,7 +240,7 @@ export function ProfileTab() {
                 void saveField({ username: username.trim() || null });
               }
             }}
-            className="w-64 px-4 py-2 rounded-xl bg-[#F3F4F6] border border-transparent text-xs text-[#111827] font-medium focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-colors"
+            className="w-full sm:w-64 px-4 py-2 rounded-xl bg-[#F3F4F6] border border-transparent text-xs text-[#111827] font-medium focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-colors"
           />
         </div>
       </div>
@@ -250,14 +250,14 @@ export function ProfileTab() {
           Workspace access
         </h2>
 
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center justify-between">
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <span className="text-xs text-[#6B7280]">
             Remove yourself from the workspace
           </span>
           <button
             type="button"
             onClick={() => setIsLeaveModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-[#FEE2E2]/60 hover:bg-[#FEE2E2] text-[#EF4444] text-xs font-semibold transition-colors"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FEE2E2]/60 hover:bg-[#FEE2E2] text-[#EF4444] text-xs font-semibold transition-colors text-center"
           >
             Leave Workspace
           </button>

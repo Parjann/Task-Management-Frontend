@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GoogleLoginButton } from './google-login-button';
 import { useGuestLoginMutation } from '../authApi';
+import { PyramidLogo } from '@/components/ui/pyramid-logo';
 
 export function LoginView() {
   const [guestLogin, { isLoading: isGuestLoading }] = useGuestLoginMutation();
@@ -15,7 +16,7 @@ export function LoginView() {
     setErrorMsg(null);
     try {
       await guestLogin().unwrap();
-      router.push('/dashboard');
+      router.push('/tasks');
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'data' in err
@@ -31,23 +32,9 @@ export function LoginView() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-white select-none">
       {/* Brand Header */}
-      <div className="flex items-center gap-2.5 mb-7">
-        <div className="w-[30px] h-[30px] rounded-lg bg-[#7C3AED] flex items-center justify-center shadow-sm">
-          {/* Stylized Pyramid Logo */}
-          <svg
-            className="w-4 h-4 text-white"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 2L2 22h20L12 2z" fill="white" stroke="none" />
-            <path d="M12 7.5L6.5 19h11L12 7.5z" fill="#7C3AED" stroke="none" />
-          </svg>
-        </div>
-        <span className="text-[20px] font-bold tracking-tight text-[#0F172A] font-sans">
+      <div className="flex items-center gap-3 mb-7">
+        <PyramidLogo className="w-8 h-8 rounded-xl shadow-xs" />
+        <span className="text-[22px] font-bold tracking-tight text-[#0F172A] font-sans">
           Pyramid
         </span>
       </div>

@@ -25,7 +25,7 @@ export function ProjectColumn({
   onDeleteProject,
 }: ProjectColumnProps) {
   return (
-    <div className="bg-[#F9FAFB] border border-[#E5E7EB]/80 rounded-2xl p-3.5 w-[310px] min-w-[310px] flex flex-col max-h-full font-sans select-none">
+    <div className="bg-[#F9FAFB] border border-[#E5E7EB]/80 rounded-2xl p-3.5 w-[272px] min-w-[272px] sm:w-[310px] sm:min-w-[310px] flex flex-col max-h-full font-sans select-none">
       {/* Column Header matching KanbanColumn */}
       <div className="flex items-center justify-between px-1 py-1 mb-3">
         <div className="flex items-center gap-2">

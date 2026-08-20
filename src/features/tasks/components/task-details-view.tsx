@@ -225,6 +225,7 @@ export function TaskDetailsView({
     isCompleted: s.isCompleted,
   }));
   const [activeSubtaskMenuId, setActiveSubtaskMenuId] = useState<string | null>(null);
+  const subtaskMenuRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Live comment data from RTK Query
   const comments = apiComments.map((c) => ({
@@ -583,7 +584,7 @@ export function TaskDetailsView({
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white font-sans text-[#111827]">
+    <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-6 lg:p-8 bg-white font-sans text-[#111827]">
       {/* Locked Banner Notification */}
       {isLocked && (
         <div className="mb-6 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-between animate-in fade-in duration-150">
@@ -608,7 +609,7 @@ export function TaskDetailsView({
         {/* ========================================================= */}
         <div className="lg:col-span-8 space-y-6">
           {/* Header Title & Top Actions Bar */}
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h1 className="text-[26px] md:text-[28px] font-bold text-[#111827] tracking-tight leading-tight">
                 {task?.title || 'Write API Documentation'}
@@ -620,7 +621,7 @@ export function TaskDetailsView({
             </div>
 
             {/* Action Buttons Top Right */}
-            <div className="flex items-center gap-1.5 flex-shrink-0 relative">
+            <div className="flex items-center gap-1.5 flex-shrink-0 relative flex-wrap">
               {/* Lock / Unlock Button */}
               <button
                 type="button"
@@ -640,7 +641,7 @@ export function TaskDetailsView({
               </button>
 
               {/* View Count Badge */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-semibold text-[#4B5563]">
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-semibold text-[#4B5563]">
                 <Eye className="w-3.5 h-3.5 text-[#6366F1]" />
                 <span>1</span>
               </div>
@@ -703,7 +704,7 @@ export function TaskDetailsView({
           {/* Properties Meta Section */}
           <div className="space-y-3 pt-2 text-[13px]">
             {/* Properties Row */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <span className="w-24 text-[#374151] font-semibold flex-shrink-0">
                 Properties
               </span>
@@ -745,7 +746,7 @@ export function TaskDetailsView({
             </div>
 
             {/* Labels Row */}
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
               <span className="w-24 text-[#374151] font-semibold flex-shrink-0 mt-1">
                 Labels
               </span>
@@ -769,7 +770,7 @@ export function TaskDetailsView({
             </div>
 
             {/* Resources Row */}
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
               <span className="w-24 text-[#374151] font-semibold flex-shrink-0 mt-1">
                 Resources
               </span>
@@ -883,8 +884,9 @@ export function TaskDetailsView({
                         <td className="py-3.5 px-6 text-[#374151] font-medium text-[13px]">
                           {sub.dueDate}
                         </td>
-                        <td className="py-3.5 px-6 text-right relative">
+                        <td className="py-3.5 px-6 text-right">
                           <button
+                            ref={(el) => { subtaskMenuRefs.current[sub.id] = el; }}
                             type="button"
                             onClick={() =>
                               setActiveSubtaskMenuId(
@@ -902,6 +904,8 @@ export function TaskDetailsView({
                               handleToggleCompleteSubtask(sub.id)
                             }
                             onDelete={() => handleDeleteSubtask(sub.id)}
+                            triggerRef={{ current: subtaskMenuRefs.current[sub.id] }}
+                            useFixedPosition
                           />
                         </td>
                       </tr>

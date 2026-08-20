@@ -7,7 +7,7 @@ export default async function Home() {
   const token = cookieStore.get('accessToken')?.value;
 
   if (token) {
-    redirect('/dashboard');
+    redirect('/tasks');
   }
 
   return <LoginView />;

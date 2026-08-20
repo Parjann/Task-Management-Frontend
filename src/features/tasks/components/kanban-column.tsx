@@ -32,7 +32,7 @@ export function KanbanColumn({
 
   return (
     <div
-      className={`bg-[#F9FAFB] border rounded-2xl p-3.5 w-[310px] min-w-[310px] flex flex-col max-h-full transition-colors ${
+      className={`bg-[#F9FAFB] border rounded-2xl p-3.5 w-[272px] min-w-[272px] sm:w-[310px] sm:min-w-[310px] flex flex-col max-h-full transition-colors ${
         isOver ? 'border-[#7C3AED] bg-[#F5F3FF]' : 'border-[#E5E7EB]/80'
       }`}
     >

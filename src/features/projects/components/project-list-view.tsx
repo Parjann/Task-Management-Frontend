@@ -269,7 +269,7 @@ export function ProjectListView() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans relative">
+    <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-6 lg:p-8 bg-white overflow-hidden font-sans relative">
       {/* Top Header Row with Title and Action buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
         <h1 className="text-[26px] font-bold text-[#111827] tracking-tight">
@@ -277,58 +277,61 @@ export function ProjectListView() {
         </h1>
 
         <div className="flex items-center gap-2 flex-wrap relative">
-          {/* 1. Animated Search Input */}
-          <div className="relative flex items-center">
-            {isSearchExpanded ? (
-              <div className="relative flex items-center animate-in fade-in zoom-in-95 duration-150">
-                <Search className="w-3.5 h-3.5 text-[#9CA3AF] absolute left-3 pointer-events-none" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-44 md:w-56 pl-8 pr-7 py-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-xs text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:bg-white focus:border-[#7C3AED] transition-all"
-                />
+          {/* 1. Search Input Bar / Icon */}
+          {isSearchExpanded ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white w-60 sm:w-72 md:w-80 shadow-2xs focus-within:ring-2 focus-within:ring-[#7C3AED]/20 focus-within:border-[#7C3AED] transition-all">
+              <Search className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-sm text-[#111827] placeholder:text-[#9CA3AF] bg-transparent focus:outline-none"
+              />
+              {searchQuery ? (
                 <button
                   type="button"
                   onClick={() => {
                     setSearchQuery('');
-                    setIsSearchExpanded(false);
+                    inputRef.current?.focus();
                   }}
-                  className="absolute right-2 text-[#9CA3AF] hover:text-[#111827] p-0.5 rounded-md"
+                  className="text-[#9CA3AF] hover:text-[#111827] p-0.5 rounded-md transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSearchExpanded(true);
-                  setTimeout(() => inputRef.current?.focus(), 50);
-                }}
-                className="h-8 px-2.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-semibold text-[#374151] hover:bg-[#F9FAFB] flex items-center gap-1.5 transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
-                title="Search projects (⌘F)"
-              >
-                <Search className="w-3.5 h-3.5 text-[#6B7280]" />
-                <span className="hidden sm:inline">Search</span>
-              </button>
-            )}
-          </div>
+              ) : (
+                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-[#9CA3AF] bg-[#F9FAFB] border border-[#E5E7EB] rounded-md">
+                  ⌘F
+                </kbd>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsSearchExpanded(true);
+                setTimeout(() => inputRef.current?.focus(), 50);
+              }}
+              className="p-2 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827] transition-colors shadow-none"
+              title="Search Projects (⌘F)"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          )}
 
           {/* 2. Fields Button */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsFieldsOpen(!isFieldsOpen)}
-              className={`h-8 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)] ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shadow-none ${
                 isFieldsOpen
-                  ? 'bg-[#F3F4F6] border-[#D1D5DB] text-[#111827]'
-                  : 'bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]'
+                  ? 'border-[#18181B] bg-[#F9FAFB] text-[#111827]'
+                  : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#374151] hover:text-[#111827]'
               }`}
             >
-              <Columns className="w-3.5 h-3.5 text-[#6B7280]" />
+              <Columns className="w-4 h-4 text-[#6B7280]" />
               <span>Fields</span>
             </button>
 
@@ -347,20 +350,16 @@ export function ProjectListView() {
             <button
               type="button"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`h-8 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.02)] ${
-                hasActiveFilters || isFilterOpen
-                  ? 'bg-[#F3F4F6] border-[#D1D5DB] text-[#111827]'
-                  : 'bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]'
+              className={`p-2 rounded-xl border transition-colors shadow-none relative ${
+                isFilterOpen || hasActiveFilters
+                  ? 'border-[#18181B] bg-[#F9FAFB] text-[#111827]'
+                  : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#111827]'
               }`}
+              title="Filter Projects"
             >
-              <Filter
-                className={`w-3.5 h-3.5 ${
-                  hasActiveFilters ? 'text-[#7C3AED]' : 'text-[#6B7280]'
-                }`}
-              />
-              <span>Filter</span>
+              <Filter className="w-4 h-4" />
               {hasActiveFilters && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] ml-0.5" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#7C3AED] ring-2 ring-white" />
               )}
             </button>
 
@@ -386,9 +385,9 @@ export function ProjectListView() {
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="h-8 px-3 rounded-xl bg-[#18181B] hover:bg-black text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs ml-1"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#18181B] hover:bg-black text-white text-sm font-medium transition-all shadow-sm active:scale-[0.99]"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>Add Project</span>
           </button>
         </div>
