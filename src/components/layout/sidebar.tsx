@@ -19,7 +19,7 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-export function Sidebar({ isOpen = true }: SidebarProps) {
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
