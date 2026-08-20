@@ -47,8 +47,8 @@ export function FieldsPopover({
       {/* Invisible backdrop to dismiss on click outside */}
       <div className="fixed inset-0 z-30" onClick={onClose} />
 
-      {/* Popover Container anchored under Fields button */}
-      <div className="absolute right-0 top-11 z-40 w-56 bg-white border border-[#E5E7EB] rounded-2xl p-3 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none">
+      {/* Popover Container anchored under Fields button (left-0 on mobile, md:right-0 on medium/large screens) */}
+      <div className="absolute left-0 md:left-auto md:right-0 top-11 z-40 w-56 bg-white border border-[#E5E7EB] rounded-2xl p-3 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans">
         {/* Top View Mode Switcher (List vs Board) */}
         <div className="bg-[#F3F4F6] rounded-xl p-1 flex items-center mb-3">
           <button

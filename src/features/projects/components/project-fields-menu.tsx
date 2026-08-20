@@ -47,7 +47,7 @@ export function ProjectFieldsMenu({
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Main Container positioned under [ Fields ] button */}
-      <div className="absolute right-0 top-11 z-50 flex items-start select-none">
+      <div className="absolute left-0 top-11 z-50 flex items-start select-none font-sans">
         {/* Sub-Flyout (Shown on the left of the main menu as in Screenshot 4) */}
         {activeFlyout === 'priority' && (
           <div className="mr-2 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">

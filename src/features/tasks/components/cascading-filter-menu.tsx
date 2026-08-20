@@ -41,7 +41,7 @@ export function CascadingFilterMenu({
 }: CascadingFilterMenuProps) {
   const [activeFlyout, setActiveFlyout] = useState<
     'status' | 'priority' | 'members' | 'dueDate' | 'teams' | 'labels' | 'reporter' | null
-  >('priority'); // Defaults to priority as shown in Figma screenshot
+  >('priority'); // Defaults to priority as in Figma design
 
   if (!isOpen) return null;
 
@@ -65,17 +65,22 @@ export function CascadingFilterMenu({
 
   return (
     <>
+      {/* Invisible backdrop to dismiss on click outside */}
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      {/* Main Cascading Filter Container positioned under [ ⎚ ] Filter button */}
-      <div className="absolute right-0 top-11 z-50 flex items-start select-none font-sans">
-        {/* Left Sub-Flyout Menu matching Figma screenshot */}
+      {/* 
+        Responsive Positioning:
+        - Mobile (< md): Centered horizontally in the viewport (fixed left-1/2 -translate-x-1/2 top-28)
+        - Tablet & Desktop (md+): Anchored under the button on the left side (md:absolute md:left-auto md:right-0 md:top-11 md:translate-x-0)
+      */}
+      <div className="fixed left-1/2 -translate-x-1/2 top-28 z-50 md:absolute md:left-auto md:right-0 md:top-11 md:translate-x-0 flex items-start select-none font-sans max-w-[calc(100vw-16px)]">
+        {/* Left Sub-Flyout Menu matching Figma design */}
         {activeFlyout === 'priority' && (
-          <div className="mr-2 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="mr-1.5 sm:mr-2 w-40 sm:w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 flex-shrink-0">
             <p className="text-[11px] font-semibold text-[#9CA3AF] px-2.5 py-1 mb-1">
               Priority
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 max-h-64 overflow-y-auto">
               {priorityOptions.map((opt) => {
                 const isSelected = filters.priority === opt.value;
                 return (
@@ -115,11 +120,11 @@ export function CascadingFilterMenu({
 
         {/* Sub-Flyout: Status */}
         {activeFlyout === 'status' && (
-          <div className="mr-2 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="mr-1.5 sm:mr-2 w-40 sm:w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 flex-shrink-0">
             <p className="text-[11px] font-semibold text-[#9CA3AF] px-2.5 py-1 mb-1">
               Status
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 max-h-64 overflow-y-auto">
               {statusOptions.map((opt) => {
                 const isSelected = filters.status === opt.value;
                 return (
@@ -154,11 +159,11 @@ export function CascadingFilterMenu({
 
         {/* Sub-Flyout: Members */}
         {activeFlyout === 'members' && (
-          <div className="mr-2 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="mr-1.5 sm:mr-2 w-40 sm:w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 flex-shrink-0">
             <p className="text-[11px] font-semibold text-[#9CA3AF] px-2.5 py-1 mb-1">
               Members
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 max-h-64 overflow-y-auto">
               {availableMembers.length === 0 && (
                 <p className="px-2.5 py-2 text-[11px] text-[#9CA3AF]">
                   No members on tasks yet.
@@ -192,11 +197,11 @@ export function CascadingFilterMenu({
 
         {/* Sub-Flyout: Labels */}
         {activeFlyout === 'labels' && (
-          <div className="mr-2 w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="mr-1.5 sm:mr-2 w-40 sm:w-44 bg-white border border-[#E5E7EB] rounded-2xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100 flex-shrink-0">
             <p className="text-[11px] font-semibold text-[#9CA3AF] px-2.5 py-1 mb-1">
               Labels
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 max-h-64 overflow-y-auto">
               {labelOptions.length === 0 && (
                 <p className="px-2.5 py-2 text-[11px] text-[#9CA3AF]">
                   No labels on tasks yet.
@@ -231,8 +236,8 @@ export function CascadingFilterMenu({
           </div>
         )}
 
-        {/* Primary Filter Menu matching Screenshot */}
-        <div className="w-48 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+        {/* Primary Filter Menu matching Figma Screenshot */}
+        <div className="w-44 sm:w-48 bg-white border border-[#E5E7EB] rounded-2xl p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 flex-shrink-0">
           <div className="space-y-0.5 text-xs">
             {/* 1. Status */}
             <button
