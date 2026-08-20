@@ -56,6 +56,8 @@ export interface Task {
   startDate?: string | null;
   creatorId: string;
   creator?: User;
+  reporter?: User | null;
+  project?: { id: string; name: string };
   assigneeId?: string | null;
   assignee?: User | null;
   labels?: TaskLabel[];
