@@ -8,6 +8,7 @@ import {
   FolderKanban,
   ChevronDown,
   ChevronsUpDown,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useAppSelector } from '@/store/hooks';
 import { useGetProfileQuery } from '@/features/auth';
@@ -29,15 +30,21 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
   });
 
   const currentUser = user || profile;
-  const displayName = currentUser?.name || 'Dexter';
+  const displayName = currentUser?.name || 'User';
   const displayAvatar = currentUser?.avatarUrl;
 
   const navItems = [
     {
-      name: 'Tasks',
+      name: 'Dashboard',
       href: '/dashboard',
+      icon: LayoutDashboard,
+      isActive: pathname === '/dashboard',
+    },
+    {
+      name: 'Tasks',
+      href: '/tasks',
       icon: LayoutGrid,
-      isActive: pathname === '/dashboard' || pathname.startsWith('/tasks'),
+      isActive: pathname.startsWith('/tasks'),
     },
     {
       name: 'Projects',
@@ -89,7 +96,7 @@ export function Sidebar({ isOpen = true }: SidebarProps) {
             onClose={() => setIsUserMenuOpen(false)}
             user={{
               name: displayName,
-              email: currentUser?.email || 'Dexter@gmail.com',
+              email: currentUser?.email || '',
               avatarUrl: displayAvatar,
             }}
           />

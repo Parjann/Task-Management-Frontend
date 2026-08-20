@@ -49,6 +49,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     socket.on('comment.created', handleCommentCreated);
     socket.on('comment.deleted', handleCommentCreated);
+    socket.on('subtask.created', handleTaskUpdated);
+    socket.on('subtask.updated', handleTaskUpdated);
+    socket.on('subtask.deleted', handleTaskUpdated);
 
     socket.on('notification.created', handleNotificationCreated);
     socket.on('notification:new', handleNotificationCreated);
@@ -66,6 +69,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
       socket.off('comment.created', handleCommentCreated);
       socket.off('comment.deleted', handleCommentCreated);
+      socket.off('subtask.created', handleTaskUpdated);
+      socket.off('subtask.updated', handleTaskUpdated);
+      socket.off('subtask.deleted', handleTaskUpdated);
 
       socket.off('notification.created', handleNotificationCreated);
       socket.off('notification:new', handleNotificationCreated);

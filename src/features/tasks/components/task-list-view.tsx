@@ -46,8 +46,8 @@ export function TaskListView({
     { id: 'DONE', label: 'Completed' },
   ];
 
-  const formatDate = (dateStr?: string | null, fallback = '12 Sep 2026') => {
-    if (!dateStr) return fallback;
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return '—';
     try {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-GB', {
@@ -56,7 +56,7 @@ export function TaskListView({
         year: 'numeric',
       });
     } catch {
-      return fallback;
+      return '—';
     }
   };
 
@@ -112,21 +112,13 @@ export function TaskListView({
                           </td>
                         </tr>
                       ) : (
-                        sectionTasks.map((task, idx) => {
+                        sectionTasks.map((task) => {
                           const assigneeName =
                             task.assignee?.name || task.creator?.name;
                           const assigneeAvatar =
                             task.assignee?.avatarUrl || task.creator?.avatarUrl;
 
-                          const defaultDates = [
-                            '12 Sep 2026',
-                            '15 Sep 2026',
-                            '18 Sep 2026',
-                          ];
-                          const displayDate = formatDate(
-                            task.dueDate,
-                            defaultDates[idx % defaultDates.length],
-                          );
+                          const displayDate = formatDate(task.dueDate);
 
                           return (
                             <tr

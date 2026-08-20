@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Check, Users } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 
 export interface MemberOption {
   id: string;
@@ -15,48 +15,21 @@ interface MemberPickerPopoverProps {
   onClose: () => void;
   selectedMemberIds: string[];
   onToggleMember: (member: MemberOption) => void;
+  members?: MemberOption[];
 }
-
-const AVAILABLE_MEMBERS: MemberOption[] = [
-  {
-    id: 'u-1',
-    name: 'Dexter',
-    email: 'dexter@taskflow.com',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-  },
-  {
-    id: 'u-2',
-    name: 'Carl Nuñez',
-    email: 'carl@taskflow.com',
-    avatarUrl: null,
-  },
-  {
-    id: 'u-3',
-    name: 'Ankit Dutta',
-    email: 'ankit@taskflow.com',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face',
-  },
-  {
-    id: 'u-4',
-    name: 'QA Team',
-    email: 'qa@taskflow.com',
-    avatarUrl: null,
-  },
-];
 
 export function MemberPickerPopover({
   isOpen,
   onClose,
   selectedMemberIds,
   onToggleMember,
+  members = [],
 }: MemberPickerPopoverProps) {
   const [search, setSearch] = useState('');
 
   if (!isOpen) return null;
 
-  const filtered = AVAILABLE_MEMBERS.filter(
+  const filtered = members.filter(
     (m) =>
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       m.email.toLowerCase().includes(search.toLowerCase()),
@@ -67,7 +40,6 @@ export function MemberPickerPopover({
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       <div className="absolute right-0 top-8 z-50 w-60 bg-white border border-[#E5E7EB] rounded-2xl p-2.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none">
-        {/* Search input */}
         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] mb-2 focus-within:border-[#7C3AED]">
           <Search className="w-3.5 h-3.5 text-[#9CA3AF]" />
           <input
@@ -79,8 +51,12 @@ export function MemberPickerPopover({
           />
         </div>
 
-        {/* Member items list */}
         <div className="space-y-0.5 max-h-48 overflow-y-auto">
+          {filtered.length === 0 && (
+            <p className="px-2.5 py-3 text-[11px] text-[#9CA3AF]">
+              No project members found.
+            </p>
+          )}
           {filtered.map((member) => {
             const isSelected = selectedMemberIds.includes(member.id);
             return (

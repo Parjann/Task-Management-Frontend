@@ -4,6 +4,7 @@ import React from 'react';
 import { ReduxProvider } from './redux-provider';
 import { ThemeProvider } from './theme-provider';
 import { ColorThemeProvider } from './color-theme-provider';
+import { PreferencesSync } from './preferences-sync';
 import { SocketProvider } from './socket-provider';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange
         >
           <ColorThemeProvider>
+            <PreferencesSync />
             {children}
           </ColorThemeProvider>
         </ThemeProvider>

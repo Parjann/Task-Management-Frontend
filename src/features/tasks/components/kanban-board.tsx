@@ -1,8 +1,19 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { Task, TaskStatus, TaskPriority } from '../types';
 import { KanbanColumn } from './kanban-column';
+import { TaskCard } from './task-card';
 import { TaskHeader } from './task-header';
 import { CreateTaskModal } from './create-task-modal';
 import { TaskListView } from './task-list-view';
@@ -26,6 +37,13 @@ interface KanbanBoardProps {
   projectId?: string;
 }
 
+const COLUMN_IDS: TaskStatus[] = [
+  'TODO',
+  'IN_PROGRESS',
+  'DONE',
+  'BACKLOG',
+];
+
 export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
   const dispatch = useAppDispatch();
   const reduxSelectedProjectId = useAppSelector(
@@ -37,6 +55,13 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
   const [targetColumnStatus, setTargetColumnStatus] =
     useState<TaskStatus>('TODO');
   const [toast, setToast] = useState<ToastMessage | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
   const showToast = (toastData: ToastMessage) => {
     setToast(toastData);
@@ -51,12 +76,9 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
     refetchOnMountOrArgChange: true,
   });
 
-  const projectList = Array.isArray(apiProjects) ? apiProjects : [];
-  const activeProjectId =
-    propProjectId || reduxSelectedProjectId;
+  const activeProjectId = propProjectId || reduxSelectedProjectId;
 
-  // RTK Query API Hook: Fetch all tasks (or filter by project if selected)
-  const { data: apiTasks = [], isLoading: isTasksLoading } = useGetTasksQuery(
+  const { data: apiTasks = [] } = useGetTasksQuery(
     {
       ...(activeProjectId ? { projectId: activeProjectId } : {}),
       ...(searchQuery ? { search: searchQuery } : {}),
@@ -73,9 +95,8 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
 
   const tasks = Array.isArray(apiTasks) ? apiTasks : [];
 
-  // Fields and View Mode State
   const [isFieldsOpen, setIsFieldsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [visibleFields, setVisibleFields] = useState<VisibleFields>({
     priority: true,
     members: true,
@@ -85,7 +106,6 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
     reporter: false,
   });
 
-  // Filter State (Cascading Filter)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<CascadingFilterState>({
     priority: 'ALL',
@@ -123,12 +143,12 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
           'MAIN' +
           alphabet[Math.floor(Math.random() * alphabet.length)] +
           alphabet[Math.floor(Math.random() * alphabet.length)];
-        const newProj: any = await createProjectMutation({
+        const newProj = await createProjectMutation({
           name: 'Main Workspace',
           key: randKey.slice(0, 6),
           description: 'Default project workspace',
         }).unwrap();
-        targetProjectId = newProj?.id || newProj?.project?.id;
+        targetProjectId = newProj?.id;
         if (targetProjectId) {
           dispatch(setSelectedProjectId(targetProjectId));
         }
@@ -189,10 +209,8 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
     }
   };
 
-  // Real-time task filtering based on Search Query and Cascading Filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      // 1. Search Query Filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesTitle = task.title?.toLowerCase().includes(q);
@@ -213,7 +231,6 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
         }
       }
 
-      // 2. Cascading Priority Filter
       if (filters.priority !== 'ALL') {
         if (filters.priority === 'NONE' && task.priority) return false;
         if (filters.priority !== 'NONE' && task.priority !== filters.priority) {
@@ -221,12 +238,10 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
         }
       }
 
-      // 3. Cascading Status Filter
       if (filters.status !== 'ALL' && task.status !== filters.status) {
         return false;
       }
 
-      // 4. Cascading Member Filter
       if (filters.member !== 'ALL') {
         const memberName = task.assignee?.name || task.creator?.name || '';
         if (memberName !== filters.member) {
@@ -234,7 +249,6 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
         }
       }
 
-      // 5. Cascading Label Filter
       if (filters.label !== 'ALL') {
         const hasLabel = task.labels?.some(
           (l) => l.label?.name.toLowerCase() === filters.label.toLowerCase(),
@@ -246,6 +260,25 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
     });
   }, [tasks, searchQuery, filters]);
 
+  const filterMembers = useMemo(() => {
+    const map = new Map<string, string>();
+    tasks.forEach((t) => {
+      const u = t.assignee || t.creator;
+      if (u?.id && u.name) map.set(u.id, u.name);
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [tasks]);
+
+  const filterLabels = useMemo(() => {
+    const names = new Set<string>();
+    tasks.forEach((t) => {
+      t.labels?.forEach((l) => {
+        if (l.label?.name) names.add(l.label.name);
+      });
+    });
+    return Array.from(names);
+  }, [tasks]);
+
   const columns: { id: TaskStatus; title: string }[] = [
     { id: 'TODO', title: 'To Do' },
     { id: 'IN_PROGRESS', title: 'Doing' },
@@ -253,9 +286,57 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
     { id: 'BACKLOG', title: 'On Hold' },
   ];
 
+  const resolveStatus = (overId: string | number): TaskStatus | null => {
+    const id = String(overId);
+    if (COLUMN_IDS.includes(id as TaskStatus)) return id as TaskStatus;
+    const overTask = tasks.find((t) => t.id === id);
+    return overTask?.status || null;
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const task = tasks.find((t) => t.id === event.active.id);
+    setActiveTask(task || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
+    if (!over) return;
+
+    const taskId = String(active.id);
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const newStatus = resolveStatus(over.id);
+    if (!newStatus || newStatus === task.status) return;
+
+    const columnTasks = filteredTasks
+      .filter((t) => t.status === newStatus && t.id !== taskId)
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+    const orderIndex =
+      columnTasks.length > 0
+        ? columnTasks[columnTasks.length - 1].orderIndex + 1
+        : 0;
+
+    try {
+      await moveTaskMutation({
+        id: taskId,
+        body: { status: newStatus, orderIndex },
+        projectId: task.projectId || activeProjectId || undefined,
+      }).unwrap();
+    } catch (err: any) {
+      const errMsg =
+        err?.data?.message || err?.message || 'Failed to move task.';
+      showToast({
+        type: 'error',
+        title: 'Move Failed',
+        message: Array.isArray(errMsg) ? errMsg.join(', ') : errMsg,
+      });
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col min-w-0 p-6 md:p-8 bg-white overflow-hidden font-sans relative">
-      {/* Top Header Row with Title, Action buttons, Search and Filter */}
       <TaskHeader
         onAddTask={() => handleOpenAddModal('TODO')}
         searchQuery={searchQuery}
@@ -272,26 +353,48 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
         onCloseFilter={() => setIsFilterOpen(false)}
         filters={filters}
         onFilterChange={setFilters}
+        availableMembers={filterMembers}
+        availableLabels={filterLabels}
       />
 
-      {/* Main View: Either Grouped List View or Kanban Board */}
       {viewMode === 'board' ? (
-        <div className="flex-1 flex items-start gap-5 overflow-x-auto pb-6 pt-1 select-none scrollbar-thin">
-          {columns.map((col) => {
-            const colTasks = filteredTasks.filter((t) => t.status === col.id);
-            return (
-              <KanbanColumn
-                key={col.id}
-                id={col.id}
-                title={col.title}
-                tasks={colTasks}
-                visibleFields={visibleFields}
-                onAddTask={handleOpenAddModal}
-                onDeleteTask={handleDeleteTask}
-              />
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 flex items-start gap-5 overflow-x-auto pb-6 pt-1 select-none scrollbar-thin">
+            {columns.map((col) => {
+              const colTasks = filteredTasks
+                .filter((t) => t.status === col.id)
+                .sort((a, b) => a.orderIndex - b.orderIndex);
+              return (
+                <KanbanColumn
+                  key={col.id}
+                  id={col.id}
+                  title={col.title}
+                  tasks={colTasks}
+                  visibleFields={visibleFields}
+                  onAddTask={handleOpenAddModal}
+                  onDeleteTask={handleDeleteTask}
+                />
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeTask ? (
+              <div className="w-[280px]">
+                <TaskCard
+                  task={activeTask}
+                  visibleFields={visibleFields}
+                  isDragging
+                  sortable={false}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       ) : (
         <div className="flex-1 overflow-y-auto pb-6 pt-1">
           <TaskListView
@@ -302,7 +405,6 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
         </div>
       )}
 
-      {/* Create Task Modal */}
       <CreateTaskModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -310,7 +412,6 @@ export function KanbanBoard({ projectId: propProjectId }: KanbanBoardProps) {
         defaultStatus={targetColumnStatus}
       />
 
-      {/* Feedback Toast */}
       <FeedbackToast toast={toast} onClose={() => setToast(null)} />
     </div>
   );

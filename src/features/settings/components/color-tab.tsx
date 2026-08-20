@@ -1,13 +1,20 @@
 'use client';
 
 import React from 'react';
-import { useColorTheme, ColorMode, COLOR_MAP } from '@/providers/color-theme-provider';
+import { useColorTheme, ColorMode } from '@/providers/color-theme-provider';
 import { Check } from 'lucide-react';
+import { useUpdateProfileMutation } from '@/features/auth';
 
 export function ColorTab() {
   const { colorMode, setColorMode } = useColorTheme();
+  const [updateProfile] = useUpdateProfileMutation();
 
-  const colorList: { id: ColorMode; name: string; hex: string; description: string }[] = [
+  const colorList: {
+    id: ColorMode;
+    name: string;
+    hex: string;
+    description: string;
+  }[] = [
     { id: 'amber', name: 'Amber', hex: '#F59E0B', description: 'Warm amber accent' },
     { id: 'blue', name: 'Blue', hex: '#7C3AED', description: 'Royal purple / blue accent' },
     { id: 'pink', name: 'Pink', hex: '#EC4899', description: 'Vibrant pink accent' },
@@ -33,7 +40,10 @@ export function ColorTab() {
           return (
             <div
               key={col.id}
-              onClick={() => setColorMode(col.id)}
+              onClick={() => {
+                setColorMode(col.id);
+                void updateProfile({ accentColor: col.hex });
+              }}
               className={`bg-white border rounded-2xl p-4 cursor-pointer transition-all ${
                 isSelected
                   ? 'border-[#18181B] ring-2 ring-[#18181B]/10 shadow-md'

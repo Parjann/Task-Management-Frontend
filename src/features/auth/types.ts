@@ -3,11 +3,22 @@ export interface User {
   email: string;
   name: string;
   avatarUrl?: string | null;
+  title?: string | null;
+  username?: string | null;
   isGuest?: boolean;
   theme?: 'SYSTEM' | 'LIGHT' | 'DARK';
   accentColor?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UpdateUserDto {
+  name?: string;
+  email?: string;
+  title?: string | null;
+  username?: string | null;
+  theme?: 'SYSTEM' | 'LIGHT' | 'DARK';
+  accentColor?: string;
 }
 
 export interface AuthState {

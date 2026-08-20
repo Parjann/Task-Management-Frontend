@@ -37,7 +37,7 @@ export const invitationApi = baseApi.injectEndpoints({
     }),
     acceptInvitation: builder.mutation<{ message: string }, string>({
       query: (token) => ({
-        url: `/invitations/accept/${token}`,
+        url: `/invitations/${token}/accept`,
         method: 'POST',
       }),
       invalidatesTags: ['Project'],

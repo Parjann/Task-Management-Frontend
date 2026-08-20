@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { TaskStatus, TaskPriority } from '../types';
 
@@ -27,9 +27,13 @@ export function CreateTaskModal({
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
-  const [assigneeName, setAssigneeName] = useState('Admin');
   const [dueDate, setDueDate] = useState('');
-  const [label, setLabel] = useState('Deployment');
+
+  useEffect(() => {
+    if (isOpen) {
+      setStatus(defaultStatus);
+    }
+  }, [isOpen, defaultStatus]);
 
   if (!isOpen) return null;
 
@@ -41,12 +45,13 @@ export function CreateTaskModal({
       title: title.trim(),
       status,
       priority,
-      assigneeName,
-      dueDate: dueDate || new Date().toISOString(),
-      label,
+      assigneeName: '',
+      dueDate,
+      label: '',
     });
 
     setTitle('');
+    setDueDate('');
     onClose();
   };
 
@@ -113,32 +118,16 @@ export function CreateTaskModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[#374151] mb-1">
-                Assignee
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Admin / Designer"
-                value={assigneeName}
-                onChange={(e) => setAssigneeName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#374151] mb-1">
-                Label / Tag
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Deployment / UI"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827]"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-[#374151] mb-1">
+              Due Date (optional)
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#F3F4F6]">

@@ -4,9 +4,17 @@ import {
   LoginDto,
   LoginResponse,
   RegisterDto,
+  UpdateUserDto,
   User,
 } from './types';
-import { setCredentials, logout } from './authSlice';
+import { setCredentials, setUser, logout } from './authSlice';
+
+function asLoginResponse(data: unknown): LoginResponse {
+  const payload = data as LoginResponse & { data?: LoginResponse };
+  if (payload?.user && payload?.accessToken) return payload;
+  if (payload?.data?.user && payload?.data?.accessToken) return payload.data;
+  return payload;
+}
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -19,7 +27,7 @@ export const authApi = baseApi.injectEndpoints({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials(asLoginResponse(data)));
         } catch {
           // Handled by component
         }
@@ -36,7 +44,7 @@ export const authApi = baseApi.injectEndpoints({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials(asLoginResponse(data)));
         } catch {
           // Handled by component
         }
@@ -53,7 +61,7 @@ export const authApi = baseApi.injectEndpoints({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials(asLoginResponse(data)));
         } catch {
           // Handled by component
         }
@@ -70,7 +78,7 @@ export const authApi = baseApi.injectEndpoints({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setCredentials(data));
+          dispatch(setCredentials(asLoginResponse(data)));
         } catch {
           // Handled by component
         }
@@ -80,7 +88,36 @@ export const authApi = baseApi.injectEndpoints({
 
     getProfile: builder.query<User, void>({
       query: () => '/users/me',
+      transformResponse: (response: unknown) =>
+        (response as { user?: User }).user || (response as User),
       providesTags: ['User'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setUser(data));
+        } catch {
+          // ignore
+        }
+      },
+    }),
+
+    updateProfile: builder.mutation<User, UpdateUserDto>({
+      query: (body) => ({
+        url: '/users/me',
+        method: 'PATCH',
+        body,
+      }),
+      transformResponse: (response: unknown) =>
+        (response as { user?: User }).user || (response as User),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setUser(data));
+        } catch {
+          // Handled by component
+        }
+      },
+      invalidatesTags: ['User'],
     }),
 
     uploadAvatar: builder.mutation<User, FormData>({
@@ -89,7 +126,33 @@ export const authApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: formData,
       }),
+      transformResponse: (response: unknown) =>
+        (response as { user?: User }).user || (response as User),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setUser(data));
+        } catch {
+          // Handled by component
+        }
+      },
       invalidatesTags: ['User'],
+    }),
+
+    leaveWorkspace: builder.mutation<{ message: string }, void>({
+      query: () => ({
+        url: '/users/me/leave-workspace',
+        method: 'POST',
+      }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(logout());
+        } catch {
+          // Handled by component
+        }
+      },
+      invalidatesTags: ['Auth', 'User', 'Project', 'Task'],
     }),
 
     logoutUser: builder.mutation<{ message: string }, void>({
@@ -108,6 +171,8 @@ export const {
   useGoogleLoginMutation,
   useGuestLoginMutation,
   useGetProfileQuery,
+  useUpdateProfileMutation,
   useUploadAvatarMutation,
+  useLeaveWorkspaceMutation,
   useLogoutUserMutation,
 } = authApi;

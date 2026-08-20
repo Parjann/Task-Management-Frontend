@@ -29,21 +29,23 @@ export function ProjectCard({
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const leadName = project.leadName || 'Dexter';
+  const leadName = project.leadName || 'Unassigned';
   const leadAvatar = project.leadAvatar;
-
-  const defaultLabels = ['Design', 'Frontend'];
 
   return (
     <div
       onClick={() => router.push(`/projects/${project.id}`)}
       className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md transition-all cursor-pointer group select-none relative"
     >
-      {/* Title Row */}
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[14px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors leading-snug line-clamp-2">
-          {project.name}
-        </h3>
+        <div className="min-w-0">
+          <h3 className="text-[14px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors leading-snug line-clamp-2">
+            {project.name}
+          </h3>
+          {project.key && (
+            <p className="text-[11px] text-[#9CA3AF] mt-0.5">{project.key}</p>
+          )}
+        </div>
         <div className="relative">
           <button
             type="button"
@@ -68,17 +70,14 @@ export function ProjectCard({
         </div>
       </div>
 
-      {/* Priority if enabled */}
       {visibleFields.priority && (
         <div className="mt-2.5 flex items-center gap-1.5">
           <PriorityBadge priority={project.priority} />
         </div>
       )}
 
-      {/* Lead & Due Date Row */}
       {(visibleFields.members || visibleFields.dueDate) && (
         <div className="flex items-center justify-between gap-2 mt-3.5">
-          {/* Lead / Member */}
           {visibleFields.members ? (
             <div className="flex items-center gap-2 min-w-0">
               {leadAvatar ? (
@@ -101,8 +100,7 @@ export function ProjectCard({
             <div />
           )}
 
-          {/* Due Date Red Badge */}
-          {visibleFields.dueDate && (
+          {visibleFields.dueDate && project.dueDate && (
             <div className="flex items-center gap-1 bg-[#FEE2E2]/70 text-[#EF4444] text-xs font-semibold px-2 py-0.5 rounded-md flex-shrink-0">
               <Calendar className="w-3.5 h-3.5 text-[#EF4444]" />
               <span>{project.dueDate}</span>
@@ -111,18 +109,14 @@ export function ProjectCard({
         </div>
       )}
 
-      {/* Tags / Labels Row */}
-      {visibleFields.labels && (
+      {visibleFields.labels && typeof project.taskCount === 'number' && (
         <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-1">
-          {defaultLabels.map((tag, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-1 bg-[#F3F4F6] text-[#4B5563] text-xs font-medium px-2 py-0.5 rounded-md"
-            >
-              <Tag className="w-3 h-3 text-[#6B7280]" />
-              <span>{tag}</span>
-            </div>
-          ))}
+          <div className="flex items-center gap-1 bg-[#F3F4F6] text-[#4B5563] text-xs font-medium px-2 py-0.5 rounded-md">
+            <Tag className="w-3 h-3 text-[#6B7280]" />
+            <span>
+              {project.taskCount} task{project.taskCount === 1 ? '' : 's'}
+            </span>
+          </div>
         </div>
       )}
     </div>

@@ -28,6 +28,7 @@ interface CascadingFilterMenuProps {
   filters: CascadingFilterState;
   onFilterChange: (filters: CascadingFilterState) => void;
   availableMembers?: { id: string; name: string }[];
+  availableLabels?: string[];
 }
 
 export function CascadingFilterMenu({
@@ -35,11 +36,8 @@ export function CascadingFilterMenu({
   onClose,
   filters,
   onFilterChange,
-  availableMembers = [
-    { id: 'Dexter', name: 'Dexter' },
-    { id: 'Carl Nuñez', name: 'Carl Nuñez' },
-    { id: 'Admin', name: 'Admin' },
-  ],
+  availableMembers = [],
+  availableLabels = [],
 }: CascadingFilterMenuProps) {
   const [activeFlyout, setActiveFlyout] = useState<
     'status' | 'priority' | 'members' | 'dueDate' | 'teams' | 'labels' | 'reporter' | null
@@ -63,7 +61,7 @@ export function CascadingFilterMenu({
     { value: 'BACKLOG', label: 'Backlog', dot: '#D97706' },
   ];
 
-  const labelOptions = ['Research', 'Design', 'Development', 'Testing', 'Deployment'];
+  const labelOptions = availableLabels;
 
   return (
     <>
@@ -161,6 +159,11 @@ export function CascadingFilterMenu({
               Members
             </p>
             <div className="space-y-0.5">
+              {availableMembers.length === 0 && (
+                <p className="px-2.5 py-2 text-[11px] text-[#9CA3AF]">
+                  No members on tasks yet.
+                </p>
+              )}
               {availableMembers.map((mem) => {
                 const isSelected = filters.member === mem.name;
                 return (
@@ -194,6 +197,11 @@ export function CascadingFilterMenu({
               Labels
             </p>
             <div className="space-y-0.5">
+              {labelOptions.length === 0 && (
+                <p className="px-2.5 py-2 text-[11px] text-[#9CA3AF]">
+                  No labels on tasks yet.
+                </p>
+              )}
               {labelOptions.map((lbl) => {
                 const isSelected = filters.label === lbl;
                 return (

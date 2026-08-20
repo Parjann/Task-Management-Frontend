@@ -10,7 +10,6 @@ import {
   Plus,
   MoreHorizontal,
   X,
-  Calendar,
 } from 'lucide-react';
 import { PriorityBadge } from '@/features/tasks/components/priority-badge';
 import { TaskPriority, TaskStatus } from '@/features/tasks/types';
@@ -35,11 +34,13 @@ import { FeedbackToast, ToastMessage } from '@/components/ui/feedback-toast';
 export interface ProjectItem {
   id: string;
   name: string;
+  key?: string;
   priority: TaskPriority;
   status: TaskStatus;
   leadName?: string | null;
   leadAvatar?: string | null;
-  dueDate: string;
+  dueDate: string | null;
+  taskCount?: number;
 }
 
 export function ProjectListView() {
@@ -67,16 +68,31 @@ export function ProjectListView() {
   const [createProjectMutation] = useCreateProjectMutation();
   const [deleteProjectMutation] = useDeleteProjectMutation();
 
+  const formatDueDate = (dateStr?: string | null) => {
+    if (!dateStr) return null;
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return null;
+    }
+  };
+
   const projects: ProjectItem[] = useMemo(() => {
     if (!Array.isArray(apiProjects)) return [];
     return apiProjects.map((p) => ({
       id: p.id,
       name: p.name,
-      priority: 'HIGH' as TaskPriority,
+      key: p.key,
+      priority: (p.priority || 'MEDIUM') as TaskPriority,
       status: 'TODO' as TaskStatus,
-      leadName: p.owner?.name || 'Dexter',
+      leadName: p.owner?.name || 'Unassigned',
       leadAvatar: p.owner?.avatarUrl || null,
-      dueDate: '12 Sep 2026',
+      dueDate: formatDueDate(p.dueDate),
+      taskCount: p._count?.tasks ?? 0,
     }));
   }, [apiProjects]);
 
@@ -132,9 +148,8 @@ export function ProjectListView() {
 
   // New Project Form state
   const [newProjectName, setNewProjectName] = useState('');
-  const [newPriority, setNewPriority] = useState<TaskPriority>('HIGH');
-  const [newStatus, setNewStatus] = useState<TaskStatus>('TODO');
-  const [newDueDate, setNewDueDate] = useState('2026-09-25');
+  const [newPriority, setNewPriority] = useState<TaskPriority>('MEDIUM');
+  const [newDueDate, setNewDueDate] = useState('');
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -193,9 +208,15 @@ export function ProjectListView() {
         name: newProjectName.trim(),
         key: generatedKey,
         description: 'New Project',
+        priority: newPriority,
+        dueDate: newDueDate
+          ? new Date(newDueDate).toISOString()
+          : undefined,
       }).unwrap();
 
       setNewProjectName('');
+      setNewDueDate('');
+      setNewPriority('MEDIUM');
       setIsAddModalOpen(false);
       showToast({
         type: 'success',
@@ -348,6 +369,16 @@ export function ProjectListView() {
               onClose={() => setIsFilterOpen(false)}
               filters={filters}
               onFilterChange={setFilters}
+              availableMembers={projects
+                .filter((p) => p.leadName)
+                .map((p) => ({
+                  id: p.id,
+                  name: p.leadName as string,
+                }))
+                .filter(
+                  (m, idx, arr) =>
+                    arr.findIndex((x) => x.name === m.name) === idx,
+                )}
             />
           </div>
 
@@ -452,14 +483,14 @@ export function ProjectListView() {
                               </div>
                             )}
                             <span className="text-[13px] font-medium text-[#374151]">
-                              {project.leadName || 'Dexter'}
+                              {project.leadName || 'Unassigned'}
                             </span>
                           </div>
                         </td>
 
                         {/* Due Date */}
                         <td className="py-4 px-6 text-[#374151] font-medium text-[13px]">
-                          {project.dueDate}
+                          {project.dueDate || '—'}
                         </td>
 
                         {/* Actions Menu */}
@@ -545,22 +576,35 @@ export function ProjectListView() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1">
-                  Priority
-                </label>
-                <select
-                  value={newPriority}
-                  onChange={(e) =>
-                    setNewPriority(e.target.value as TaskPriority)
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
-                >
-                  <option value="HIGH">High</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="LOW">Low</option>
-                  <option value="URGENT">Urgent</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={newPriority}
+                    onChange={(e) =>
+                      setNewPriority(e.target.value as TaskPriority)
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+                  >
+                    <option value="HIGH">High</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LOW">Low</option>
+                    <option value="URGENT">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-[#F3F4F6]">

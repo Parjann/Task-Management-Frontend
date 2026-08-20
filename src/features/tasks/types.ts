@@ -12,7 +12,7 @@ export type TaskStatus =
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export interface TaskLabel {
-  id: string;
+  id?: string;
   taskId: string;
   labelId: string;
   label: {
@@ -62,6 +62,19 @@ export interface Task {
   assignee?: User | null;
   labels?: TaskLabel[];
   subtasks?: Subtask[];
+  comments?: Comment[];
+  activities?: {
+    id: string;
+    action: string;
+    message: string;
+    createdAt: string;
+    user?: User;
+  }[];
+  attachments?: {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+  }[];
   _count?: {
     comments: number;
     attachments: number;

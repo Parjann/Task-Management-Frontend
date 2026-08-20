@@ -36,7 +36,7 @@ import {
   MemberOption,
 } from './member-picker-popover';
 import { LabelPickerPopover } from './label-picker-popover';
-import { ResourceModal, ResourceItem } from './resource-modal';
+import { ResourceModal } from './resource-modal';
 import { ShareTaskModal } from './share-task-modal';
 import { TaskSettingsModal } from './task-settings-modal';
 import { EmojiPickerPopover } from './emoji-picker-popover';
@@ -53,7 +53,20 @@ import {
   useUpdateTaskMutation,
   useDeleteTaskMutation,
 } from '../taskApi';
+import { useGetProjectMembersQuery } from '@/features/projects';
+import {
+  useGetLabelsQuery,
+  useCreateLabelMutation,
+  useAssignLabelMutation,
+  useRemoveTaskLabelMutation,
+} from '@/features/labels';
+import {
+  useGetAttachmentsQuery,
+  useUploadAttachmentMutation,
+  useDeleteAttachmentMutation,
+} from '@/features/attachments';
 import { FeedbackToast, ToastMessage } from '@/components/ui/feedback-toast';
+import type { LabelOption } from './label-picker-popover';
 
 interface TaskDetailsViewProps {
   taskId?: string;
@@ -89,6 +102,18 @@ export function TaskDetailsView({
   const { data: apiComments = [] } = useGetCommentsQuery(effectiveTaskId, {
     skip: !effectiveTaskId,
   });
+  const projectId = (liveTask || propTask)?.projectId;
+  const { data: projectMembers = [] } = useGetProjectMembersQuery(
+    projectId || '',
+    { skip: !projectId },
+  );
+  const { data: projectLabels = [] } = useGetLabelsQuery(projectId || '', {
+    skip: !projectId,
+  });
+  const { data: apiAttachments = [] } = useGetAttachmentsQuery(
+    effectiveTaskId,
+    { skip: !effectiveTaskId },
+  );
 
   const [updateTaskMutation] = useUpdateTaskMutation();
   const [deleteTaskMutation] = useDeleteTaskMutation();
@@ -97,6 +122,13 @@ export function TaskDetailsView({
   const [deleteSubtaskMutation] = useDeleteSubtaskMutation();
   const [createCommentMutation] = useCreateCommentMutation();
   const [deleteCommentMutation] = useDeleteCommentMutation();
+  const [createLabelMutation, { isLoading: isCreatingLabel }] =
+    useCreateLabelMutation();
+  const [assignLabelMutation] = useAssignLabelMutation();
+  const [removeTaskLabelMutation] = useRemoveTaskLabelMutation();
+  const [uploadAttachmentMutation, { isLoading: isUploading }] =
+    useUploadAttachmentMutation();
+  const [deleteAttachmentMutation] = useDeleteAttachmentMutation();
 
   const task = liveTask || propTask;
   const [toast, setToast] = useState<ToastMessage | null>(null);
@@ -107,13 +139,19 @@ export function TaskDetailsView({
       setToast((curr) => (curr?.message === toastData.message ? null : curr));
     }, 4000);
   };
-  // Sync local state from live task data
-  React.useEffect(() => {
-    if (task) {
-      if (task.priority) setSelectedPriority(task.priority);
-      if (task.status) setSelectedStatus(task.status);
-    }
-  }, [task]);
+
+  const memberOptions: MemberOption[] = projectMembers.map((m) => ({
+    id: m.userId || m.user?.id,
+    name: m.user?.name || 'Member',
+    email: m.user?.email || '',
+    avatarUrl: m.user?.avatarUrl,
+  }));
+
+  const labelOptions: LabelOption[] = projectLabels.map((l) => ({
+    id: l.id,
+    name: l.name,
+    color: l.color,
+  }));
 
   // Lock state
   const [isLocked, setIsLocked] = useState(false);
@@ -137,41 +175,44 @@ export function TaskDetailsView({
   // Members Picker state
   const [isMemberMenuOpen, setIsMemberMenuOpen] = useState(false);
   const [subtaskAssignIndex, setSubtaskAssignIndex] = useState<number | null>(null);
-  const [selectedMembers, setSelectedMembers] = useState<MemberOption[]>([
-    {
-      id: 'u-1',
-      name: 'Dexter',
-      email: 'dexter@taskflow.com',
-      avatarUrl:
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-    },
-  ]);
+  const [selectedMembers, setSelectedMembers] = useState<MemberOption[]>([]);
 
   // Date Picker state
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [dateType, setDateType] = useState<'start' | 'end'>('start');
-  const [startDate, setStartDate] = useState<Date | null>(new Date(2026, 0, 10));
+  const [dateType, setDateType] = useState<'start' | 'end'>('end');
+  const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
   // Labels Picker state
   const [isLabelMenuOpen, setIsLabelMenuOpen] = useState(false);
-  const [selectedLabels, setSelectedLabels] = useState<string[]>([
-    'Research',
-    'Design',
-    'Development',
-    'Testing',
-    'Deployment',
-  ]);
+  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
 
-  // Attached Resources
-  const [resources, setResources] = useState<ResourceItem[]>([
-    {
-      id: 'res-init-1',
-      type: 'link',
-      title: 'API Spec Documentation',
-      url: 'https://docs.taskflow.com',
-    },
-  ]);
+  // Sync local state from live task data
+  React.useEffect(() => {
+    if (task) {
+      if (task.priority) setSelectedPriority(task.priority);
+      if (task.status) setSelectedStatus(task.status);
+      if (task.assignee) {
+        setSelectedMembers([
+          {
+            id: task.assignee.id,
+            name: task.assignee.name,
+            email: task.assignee.email,
+            avatarUrl: task.assignee.avatarUrl,
+          },
+        ]);
+      } else {
+        setSelectedMembers([]);
+      }
+      setSelectedLabelIds(
+        (task.labels || [])
+          .map((l) => l.labelId || l.label?.id)
+          .filter(Boolean) as string[],
+      );
+      setEndDate(task.dueDate ? new Date(task.dueDate) : null);
+      setStartDate(null);
+    }
+  }, [task]);
 
   // Live subtask data from RTK Query
   const subtasks = apiSubtasks.map((s) => ({
@@ -190,40 +231,58 @@ export function TaskDetailsView({
     id: c.id,
     author: c.user?.name || 'User',
     avatar: c.user?.avatarUrl || null,
-    time: c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'just now',
+    time: c.createdAt
+      ? new Date(c.createdAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : 'just now',
     content: c.content,
     reactions: [] as { emoji: string; count: number; userReacted: boolean }[],
     attachments: [] as string[],
-    replies: [] as { id: string; author: string; avatar: string; content: string; time: string }[],
+    replies: [] as {
+      id: string;
+      author: string;
+      avatar: string;
+      content: string;
+      time: string;
+    }[],
   }));
   const [newCommentText, setNewCommentText] = useState('');
   const [replyText, setReplyText] = useState<Record<string, string>>({});
-  const [commentAttachmentName, setCommentAttachmentName] = useState<string | null>(null);
-  const [activeEmojiCommentId, setActiveEmojiCommentId] = useState<string | null>(null);
+  const [commentAttachmentName, setCommentAttachmentName] = useState<
+    string | null
+  >(null);
+  const [activeEmojiCommentId, setActiveEmojiCommentId] = useState<
+    string | null
+  >(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Timeline updates
-  const [updates, setUpdates] = useState<UpdateItem[]>([
-    {
-      id: 'u-1',
-      type: 'priority',
-      author: 'You',
-      text: 'changed priority from No priority to Ur...',
-      icon: 'flame',
-      avatar: null,
-      time: 'Aug 2026',
-    },
-    {
-      id: 'u-2',
-      type: 'post',
-      author: 'You',
-      text: 'posted an update · Aug 2026',
-      icon: null,
-      avatar:
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-      time: 'Aug 2026',
-    },
-  ]);
+  // Timeline updates from task activities when available
+  const updates: UpdateItem[] = ((task as any)?.activities || []).map(
+    (a: any) => ({
+      id: a.id,
+      type: a.action || 'post',
+      author: a.user?.name || 'Someone',
+      text: a.message || a.action,
+      icon: a.action?.includes('STATUS')
+        ? 'status'
+        : a.action?.includes('PRIORITY')
+          ? 'flame'
+          : null,
+      avatar: a.user?.avatarUrl || null,
+      time: a.createdAt
+        ? new Date(a.createdAt).toLocaleDateString('en-GB', {
+            month: 'short',
+            year: 'numeric',
+          })
+        : '',
+    }),
+  );
+
+  const selectedLabels = labelOptions.filter((l) =>
+    selectedLabelIds.includes(l.id),
+  );
 
   // Handlers
   const handlePriorityChange = async (newP: TaskPriority) => {
@@ -236,21 +295,13 @@ export function TaskDetailsView({
           projectId: task?.projectId,
         }).unwrap();
       } catch {
-        showToast({ type: 'error', title: 'Update Failed', message: 'Could not update priority' });
+        showToast({
+          type: 'error',
+          title: 'Update Failed',
+          message: 'Could not update priority',
+        });
       }
     }
-    setUpdates((prev) => [
-      {
-        id: `up-${Date.now()}`,
-        type: 'priority',
-        author: 'You',
-        text: `changed priority to ${newP.toLowerCase()}`,
-        icon: 'flame',
-        avatar: null,
-        time: 'Just now',
-      },
-      ...prev,
-    ]);
   };
 
   const handleStatusChange = async (newS: TaskStatus) => {
@@ -263,59 +314,149 @@ export function TaskDetailsView({
           projectId: task?.projectId,
         }).unwrap();
       } catch {
-        showToast({ type: 'error', title: 'Update Failed', message: 'Could not update status' });
+        showToast({
+          type: 'error',
+          title: 'Update Failed',
+          message: 'Could not update status',
+        });
       }
     }
-    setUpdates((prev) => [
-      {
-        id: `up-${Date.now()}`,
-        type: 'status',
-        author: 'You',
-        text: `changed status to ${newS.toLowerCase()}`,
-        icon: 'status',
-        avatar: null,
-        time: 'Just now',
-      },
-      ...prev,
-    ]);
   };
 
-  const handleToggleMember = (member: MemberOption) => {
+  const handleToggleMember = async (member: MemberOption) => {
     if (subtaskAssignIndex !== null) {
-      // Subtask member assignment is UI-only for now
       setSubtaskAssignIndex(null);
       return;
     }
+    if (!effectiveTaskId) return;
 
-    setSelectedMembers((prev) => {
-      const exists = prev.some((m) => m.id === member.id);
-      if (exists) return prev.filter((m) => m.id !== member.id);
-      return [...prev, member];
-    });
-  };
-
-  const handleToggleLabel = (labelName: string) => {
-    setSelectedLabels((prev) => {
-      const exists = prev.includes(labelName);
-      if (exists) return prev.filter((l) => l !== labelName);
-      return [...prev, labelName];
-    });
-  };
-
-  const handleSelectDate = (date: Date) => {
-    if (dateType === 'start') {
-      setStartDate(date);
-    } else {
-      setEndDate(date);
+    const isSame = selectedMembers.some((m) => m.id === member.id);
+    try {
+      await updateTaskMutation({
+        id: effectiveTaskId,
+        body: { assigneeId: isSame ? null : member.id },
+        projectId: task?.projectId,
+      }).unwrap();
+      setSelectedMembers(isSame ? [] : [member]);
+      setIsMemberMenuOpen(false);
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Could not update assignee',
+      });
     }
   };
 
-  const handleAddResource = (res: ResourceItem) => {
-    setResources((prev) => [...prev, res]);
+  const handleToggleLabel = async (label: LabelOption) => {
+    if (!effectiveTaskId) return;
+    const exists = selectedLabelIds.includes(label.id);
+    try {
+      if (exists) {
+        await removeTaskLabelMutation({
+          taskId: effectiveTaskId,
+          labelId: label.id,
+          projectId: task?.projectId,
+        }).unwrap();
+        setSelectedLabelIds((prev) => prev.filter((id) => id !== label.id));
+      } else {
+        await assignLabelMutation({
+          taskId: effectiveTaskId,
+          labelId: label.id,
+          projectId: task?.projectId,
+        }).unwrap();
+        setSelectedLabelIds((prev) => [...prev, label.id]);
+      }
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Could not update labels',
+      });
+    }
   };
 
-  const handleRemoveResource = (id: string) => {
-    setResources((prev) => prev.filter((r) => r.id !== id));
+  const handleCreateLabel = async (name: string) => {
+    if (!projectId) {
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Project is required to create labels',
+      });
+      return;
+    }
+    const colors = [
+      '#6B7280',
+      '#8B5CF6',
+      '#3B82F6',
+      '#10B981',
+      '#EF4444',
+      '#EC4899',
+    ];
+    try {
+      const created = await createLabelMutation({
+        projectId,
+        name,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      }).unwrap();
+      await assignLabelMutation({
+        taskId: effectiveTaskId,
+        labelId: created.id,
+        projectId,
+      }).unwrap();
+      setSelectedLabelIds((prev) => [...prev, created.id]);
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Could not create label',
+      });
+    }
+  };
+
+  const handleSelectDate = async (date: Date) => {
+    if (dateType === 'start') {
+      setStartDate(date);
+      return;
+    }
+    setEndDate(date);
+    if (!effectiveTaskId) return;
+    try {
+      await updateTaskMutation({
+        id: effectiveTaskId,
+        body: { dueDate: date.toISOString() },
+        projectId: task?.projectId,
+      }).unwrap();
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Could not update due date',
+      });
+    }
+  };
+
+  const handleUploadAttachment = async (file: File) => {
+    if (!effectiveTaskId) return;
+    await uploadAttachmentMutation({
+      taskId: effectiveTaskId,
+      file,
+    }).unwrap();
+  };
+
+  const handleRemoveAttachment = async (id: string) => {
+    try {
+      await deleteAttachmentMutation({
+        id,
+        taskId: effectiveTaskId,
+      }).unwrap();
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Could not delete attachment',
+      });
+    }
   };
 
   const handleAddSubtask = async () => {
@@ -327,7 +468,11 @@ export function TaskDetailsView({
         body: { title: `Subtask ${num}` },
       }).unwrap();
     } catch {
-      showToast({ type: 'error', title: 'Failed', message: 'Could not add subtask' });
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Could not add subtask',
+      });
     }
   };
 
@@ -338,7 +483,11 @@ export function TaskDetailsView({
         taskId: effectiveTaskId,
       }).unwrap();
     } catch {
-      showToast({ type: 'error', title: 'Failed', message: 'Could not delete subtask' });
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Could not delete subtask',
+      });
     }
   };
 
@@ -352,7 +501,11 @@ export function TaskDetailsView({
         body: { isCompleted: !sub.isCompleted },
       }).unwrap();
     } catch {
-      showToast({ type: 'error', title: 'Failed', message: 'Could not update subtask' });
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Could not update subtask',
+      });
     }
   };
 
@@ -362,19 +515,26 @@ export function TaskDetailsView({
     try {
       await createCommentMutation({
         taskId: effectiveTaskId,
-        body: { taskId: effectiveTaskId, content: newCommentText.trim() },
+        body: { content: newCommentText.trim() },
       }).unwrap();
       setNewCommentText('');
       setCommentAttachmentName(null);
     } catch {
-      showToast({ type: 'error', title: 'Failed', message: 'Could not post comment' });
+      showToast({
+        type: 'error',
+        title: 'Failed',
+        message: 'Could not post comment',
+      });
     }
   };
 
   const handleAddReply = (commentId: string) => {
     const text = replyText[commentId];
-    if (!text || !text.trim()) return;
-    // Reply functionality is UI-only for now
+    if (!text || !text.trim() || !effectiveTaskId) return;
+    void createCommentMutation({
+      taskId: effectiveTaskId,
+      body: { content: `↩ ${text.trim()}` },
+    });
     setReplyText((prev) => ({ ...prev, [commentId]: '' }));
   };
 
@@ -510,18 +670,11 @@ export function TaskDetailsView({
                   onClose={() => setIsHeaderMenuOpen(false)}
                   onCopyLink={() => navigator.clipboard.writeText(window.location.href)}
                   onDuplicate={() => {
-                    setUpdates((prev) => [
-                      {
-                        id: `up-${Date.now()}`,
-                        type: 'post',
-                        author: 'You',
-                        text: 'duplicated this task',
-                        icon: null,
-                        avatar: null,
-                        time: 'Just now',
-                      },
-                      ...prev,
-                    ]);
+                    showToast({
+                      type: 'success',
+                      title: 'Copied',
+                      message: 'Use create task to make a new copy.',
+                    });
                   }}
                   onToggleComplete={() => handleStatusChange('DONE')}
                   onDelete={async () => {
@@ -555,13 +708,39 @@ export function TaskDetailsView({
                 Properties
               </span>
               <div className="flex items-center gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-[#E5E7EB] text-[#4B5563] font-bold text-[10px] flex items-center justify-center">
-                  A
-                </div>
-                <span className="font-medium text-[#111827]">Designer</span>
-                <span className="inline-flex items-center gap-1 bg-[#FEE2E2]/70 text-[#EF4444] text-xs font-semibold px-2 py-0.5 rounded-md">
-                  📅 31 Jul
+                {task?.assignee?.avatarUrl || task?.creator?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={
+                      (task?.assignee?.avatarUrl ||
+                        task?.creator?.avatarUrl) as string
+                    }
+                    alt=""
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-[#E5E7EB] text-[#4B5563] font-bold text-[10px] flex items-center justify-center">
+                    {(
+                      task?.assignee?.name ||
+                      task?.creator?.name ||
+                      '?'
+                    )
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+                <span className="font-medium text-[#111827]">
+                  {task?.assignee?.name || task?.creator?.name || 'Unassigned'}
                 </span>
+                {task?.dueDate && (
+                  <span className="inline-flex items-center gap-1 bg-[#FEE2E2]/70 text-[#EF4444] text-xs font-semibold px-2 py-0.5 rounded-md">
+                    📅{' '}
+                    {new Date(task.dueDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -571,13 +750,19 @@ export function TaskDetailsView({
                 Labels
               </span>
               <div className="flex items-center gap-2 flex-wrap">
+                {selectedLabels.length === 0 && (
+                  <span className="text-xs text-[#9CA3AF]">No labels</span>
+                )}
                 {selectedLabels.map((lbl) => (
                   <span
-                    key={lbl}
+                    key={lbl.id}
                     className="inline-flex items-center gap-1.5 bg-[#F3F4F6] text-[#4B5563] text-xs font-medium px-2.5 py-1 rounded-md"
                   >
-                    <Tag className="w-3 h-3 text-[#6B7280]" />
-                    <span>{lbl}</span>
+                    <Tag
+                      className="w-3 h-3"
+                      style={{ color: lbl.color }}
+                    />
+                    <span>{lbl.name}</span>
                   </span>
                 ))}
               </div>
@@ -589,28 +774,24 @@ export function TaskDetailsView({
                 Resources
               </span>
               <div className="flex items-center gap-2 flex-wrap">
-                {resources.map((res) => (
+                {apiAttachments.map((res) => (
                   <span
                     key={res.id}
                     className="inline-flex items-center gap-1.5 bg-[#F3F4F6] text-[#111827] text-xs font-medium px-2.5 py-1 rounded-md border border-[#E5E7EB]"
                   >
-                    {res.type === 'file' ? (
-                      <FileText className="w-3.5 h-3.5 text-[#6366F1]" />
-                    ) : (
-                      <LinkIcon className="w-3.5 h-3.5 text-[#3B82F6]" />
-                    )}
+                    <FileText className="w-3.5 h-3.5 text-[#6366F1]" />
                     <a
-                      href={res.url}
+                      href={res.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:underline flex items-center gap-1"
                     >
-                      <span>{res.title}</span>
+                      <span>{res.fileName}</span>
                       <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                     </a>
                     <button
                       type="button"
-                      onClick={() => handleRemoveResource(res.id)}
+                      onClick={() => handleRemoveAttachment(res.id)}
                       className="text-[#9CA3AF] hover:text-red-500 ml-1 p-0.5 rounded-sm"
                     >
                       <X className="w-3 h-3" />
@@ -624,7 +805,7 @@ export function TaskDetailsView({
                   className="text-xs text-[#9CA3AF] hover:text-[#4B5563] flex items-center gap-1.5 transition-colors px-2 py-1 rounded-md hover:bg-[#F9FAFB]"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
-                  <span>Add document or link...</span>
+                  <span>Add document...</span>
                 </button>
               </div>
             </div>
@@ -744,7 +925,7 @@ export function TaskDetailsView({
           {/* Comments Section */}
           <div className="pt-6 space-y-4">
             <h3 className="text-[15px] font-semibold text-[#111827]">
-              Subtasks
+              Comments
             </h3>
 
             {comments.map((comment) => (
@@ -1103,45 +1284,32 @@ export function TaskDetailsView({
                   onClose={() => setIsMemberMenuOpen(false)}
                   selectedMemberIds={selectedMembers.map((m) => m.id)}
                   onToggleMember={handleToggleMember}
+                  members={memberOptions}
                 />
               </div>
 
               {/* 4. Dates Row */}
               <div className="flex items-center justify-between relative">
-                <span className="text-[#6B7280] font-medium">Dates</span>
+                <span className="text-[#6B7280] font-medium">Due date</span>
 
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDateType('start');
-                      setIsDatePickerOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-xs font-semibold text-[#111827] shadow-2xs transition-colors"
-                  >
-                    <Calendar className="w-3 h-3 text-[#6B7280]" />
-                    <span>{formatPillDate(startDate, 'Jan 10')}</span>
-                  </button>
-
-                  <ArrowRight className="w-3 h-3 text-[#9CA3AF]" />
-
                   <button
                     type="button"
                     onClick={() => {
                       setDateType('end');
                       setIsDatePickerOpen(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-xs font-semibold text-[#6B7280] shadow-2xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] text-xs font-semibold text-[#111827] shadow-2xs transition-colors"
                   >
                     <Calendar className="w-3 h-3 text-[#6B7280]" />
-                    <span>{formatPillDate(endDate, 'End')}</span>
+                    <span>{formatPillDate(endDate, 'Set due date')}</span>
                   </button>
                 </div>
 
                 <DatePickerPopover
                   isOpen={isDatePickerOpen}
                   onClose={() => setIsDatePickerOpen(false)}
-                  selectedDate={dateType === 'start' ? startDate : endDate}
+                  selectedDate={endDate}
                   onSelectDate={handleSelectDate}
                 />
               </div>
@@ -1166,27 +1334,21 @@ export function TaskDetailsView({
                 <LabelPickerPopover
                   isOpen={isLabelMenuOpen}
                   onClose={() => setIsLabelMenuOpen(false)}
-                  selectedLabels={selectedLabels}
+                  labels={labelOptions}
+                  selectedLabelIds={selectedLabelIds}
                   onToggleLabel={handleToggleLabel}
+                  onCreateLabel={handleCreateLabel}
+                  isCreating={isCreatingLabel}
                 />
               </div>
 
-              {/* 6. Teams Row */}
-              <div className="flex items-center justify-between">
-                <span className="text-[#6B7280] font-medium">Teams</span>
-                <button
-                  type="button"
-                  className="text-xs text-[#9CA3AF] hover:text-[#111827] px-2 py-1 rounded-lg hover:bg-[#F9FAFB] transition-colors"
-                >
-                  Engineering
-                </button>
-              </div>
-
-              {/* 7. Reporter Row */}
+              {/* 6. Reporter Row */}
               <div className="flex items-center justify-between">
                 <span className="text-[#6B7280] font-medium">Reporter</span>
                 <span className="text-xs font-semibold text-[#111827] px-2 py-1">
-                  Dexter
+                  {task?.reporter?.name ||
+                    task?.creator?.name ||
+                    'Unassigned'}
                 </span>
               </div>
             </div>
@@ -1200,6 +1362,9 @@ export function TaskDetailsView({
             </div>
 
             <div className="space-y-3 pt-1 text-xs">
+              {updates.length === 0 && (
+                <p className="text-[#9CA3AF]">No activity yet.</p>
+              )}
               {updates.map((up) => (
                 <div key={up.id} className="flex items-start gap-2.5">
                   {up.avatar ? (
@@ -1235,14 +1400,16 @@ export function TaskDetailsView({
       <ResourceModal
         isOpen={isResourceModalOpen}
         onClose={() => setIsResourceModalOpen(false)}
-        onAddResource={handleAddResource}
+        onUploadFile={handleUploadAttachment}
+        isUploading={isUploading}
       />
 
       {/* Share Task Modal */}
       <ShareTaskModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
-        taskTitle={task?.title || 'Write API Documentation'}
+        taskTitle={task?.title || 'Task'}
+        projectId={task?.projectId}
       />
 
       {/* Feedback Toast */}

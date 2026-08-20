@@ -1,6 +1,11 @@
 'use client';
 
 import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { GripVertical, Plus, MoreHorizontal } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 import { TaskCard } from './task-card';
@@ -23,13 +28,21 @@ export function KanbanColumn({
   onAddTask,
   onDeleteTask,
 }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
   return (
-    <div className="bg-[#F9FAFB] border border-[#E5E7EB]/80 rounded-2xl p-3.5 w-[310px] min-w-[310px] flex flex-col max-h-full">
-      {/* Column Header */}
+    <div
+      className={`bg-[#F9FAFB] border rounded-2xl p-3.5 w-[310px] min-w-[310px] flex flex-col max-h-full transition-colors ${
+        isOver ? 'border-[#7C3AED] bg-[#F5F3FF]' : 'border-[#E5E7EB]/80'
+      }`}
+    >
       <div className="flex items-center justify-between px-1 py-1 mb-3">
         <div className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 text-[#9CA3AF] cursor-grab active:cursor-grabbing" />
+          <GripVertical className="w-4 h-4 text-[#9CA3AF]" />
           <h2 className="text-[15px] font-semibold text-[#111827]">{title}</h2>
+          <span className="text-xs text-[#9CA3AF] font-medium">
+            {tasks.length}
+          </span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -51,19 +64,25 @@ export function KanbanColumn({
         </div>
       </div>
 
-      {/* Cards List */}
-      <div className="space-y-3 overflow-y-auto flex-1 pr-0.5 pb-2">
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            visibleFields={visibleFields}
-            onDelete={onDeleteTask}
-          />
-        ))}
+      <div
+        ref={setNodeRef}
+        className="space-y-3 overflow-y-auto flex-1 pr-0.5 pb-2 min-h-[80px]"
+      >
+        <SortableContext
+          items={tasks.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              visibleFields={visibleFields}
+              onDelete={onDeleteTask}
+            />
+          ))}
+        </SortableContext>
       </div>
 
-      {/* Add Task Button at bottom */}
       <button
         type="button"
         onClick={() => onAddTask?.(id)}

@@ -29,6 +29,8 @@ interface TaskHeaderProps {
   onCloseFilter: () => void;
   filters: CascadingFilterState;
   onFilterChange: (filters: CascadingFilterState) => void;
+  availableMembers?: { id: string; name: string }[];
+  availableLabels?: string[];
 }
 
 export function TaskHeader({
@@ -47,6 +49,8 @@ export function TaskHeader({
   onCloseFilter,
   filters,
   onFilterChange,
+  availableMembers,
+  availableLabels,
 }: TaskHeaderProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(
     Boolean(searchQuery),
@@ -182,6 +186,8 @@ export function TaskHeader({
             onClose={onCloseFilter}
             filters={filters}
             onFilterChange={onFilterChange}
+            availableMembers={availableMembers}
+            availableLabels={availableLabels}
           />
         </div>
 

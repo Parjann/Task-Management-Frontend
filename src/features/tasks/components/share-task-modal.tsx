@@ -1,22 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Globe, Lock, Mail } from 'lucide-react';
+import { X, Copy, Check, Mail } from 'lucide-react';
+import { useCreateInvitationMutation } from '@/features/invitations';
 
 interface ShareTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   taskTitle: string;
+  projectId?: string | null;
 }
 
 export function ShareTaskModal({
   isOpen,
   onClose,
   taskTitle,
+  projectId,
 }: ShareTaskModalProps) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
-  const [invited, setInvited] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [createInvitation, { isLoading }] = useCreateInvitationMutation();
 
   if (!isOpen) return null;
 
@@ -28,26 +32,42 @@ export function ShareTaskModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleInvite = (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setInvited(true);
-    setTimeout(() => {
+    if (!projectId) {
+      setErrorMsg('This task has no project to invite into.');
+      return;
+    }
+
+    setErrorMsg(null);
+    try {
+      await createInvitation({
+        projectId,
+        email: email.trim().toLowerCase(),
+        role: 'MEMBER',
+      }).unwrap();
       setEmail('');
-      setInvited(false);
       onClose();
-    }, 1200);
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'data' in err
+          ? (err as { data?: { message?: string | string[] } }).data?.message
+          : null;
+      setErrorMsg(
+        Array.isArray(msg)
+          ? msg.join(', ')
+          : msg || 'Failed to send invitation',
+      );
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl border border-[#E5E7EB] w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150 select-none">
-        {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#F3F4F6]">
           <div>
-            <h2 className="text-base font-bold text-[#111827]">
-              Share Task
-            </h2>
+            <h2 className="text-base font-bold text-[#111827]">Share Task</h2>
             <p className="text-xs text-[#6B7280] truncate max-w-[280px]">
               {taskTitle}
             </p>
@@ -61,7 +81,6 @@ export function ShareTaskModal({
           </button>
         </div>
 
-        {/* Copy Link Row */}
         <div className="mt-4">
           <label className="block text-xs font-semibold text-[#374151] mb-1.5">
             Shareable Link
@@ -93,11 +112,13 @@ export function ShareTaskModal({
           </div>
         </div>
 
-        {/* Invite by Email */}
         <form onSubmit={handleInvite} className="mt-4 pt-4 border-t border-[#F3F4F6]">
           <label className="block text-xs font-semibold text-[#374151] mb-1.5">
             Invite Collaborator
           </label>
+          {errorMsg && (
+            <p className="mb-2 text-[11px] text-red-600">{errorMsg}</p>
+          )}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Mail className="w-3.5 h-3.5 text-[#9CA3AF] absolute left-3 top-2.5" />
@@ -111,11 +132,17 @@ export function ShareTaskModal({
             </div>
             <button
               type="submit"
-              className="px-3.5 py-2 rounded-xl bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#111827] text-xs font-semibold transition-colors"
+              disabled={isLoading || !projectId}
+              className="px-3.5 py-2 rounded-xl bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#111827] text-xs font-semibold transition-colors disabled:opacity-50"
             >
-              {invited ? 'Invited!' : 'Invite'}
+              {isLoading ? 'Sending...' : 'Invite'}
             </button>
           </div>
+          {!projectId && (
+            <p className="mt-2 text-[11px] text-[#9CA3AF]">
+              Project context is required to send invitations.
+            </p>
+          )}
         </form>
       </div>
     </div>

@@ -12,7 +12,7 @@ export default function TaskDetailPage() {
   return (
     <TaskDetailsView
       taskId={taskId}
-      onBack={() => router.push('/dashboard')}
+      onBack={() => router.push('/tasks')}
     />
   );
 }

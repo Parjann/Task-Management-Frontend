@@ -1,6 +1,7 @@
+import { TaskPriority } from '../tasks/types';
 import { User } from '../auth/types';
 
-export type ProjectRole = 'OWNER' | 'ADMIN' | 'MEMBER';
+export type ProjectRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 
 export interface ProjectMember {
   id: string;
@@ -8,7 +9,8 @@ export interface ProjectMember {
   projectId: string;
   role: ProjectRole;
   user: User;
-  joinedAt: string;
+  joinedAt?: string;
+  createdAt?: string;
 }
 
 export interface Project {
@@ -17,9 +19,12 @@ export interface Project {
   key: string;
   description?: string | null;
   color?: string | null;
+  priority?: TaskPriority;
+  dueDate?: string | null;
   ownerId: string;
   owner?: User;
   members?: ProjectMember[];
+  _count?: { tasks: number };
   createdAt: string;
   updatedAt: string;
 }
@@ -29,12 +34,16 @@ export interface CreateProjectDto {
   key: string;
   description?: string;
   color?: string;
+  priority?: TaskPriority;
+  dueDate?: string;
 }
 
 export interface UpdateProjectDto {
   name?: string;
   description?: string;
   color?: string;
+  priority?: TaskPriority;
+  dueDate?: string | null;
 }
 
 export interface ProjectsState {

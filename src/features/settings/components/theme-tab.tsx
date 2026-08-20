@@ -3,9 +3,18 @@
 import React from 'react';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Check } from 'lucide-react';
+import { useUpdateProfileMutation } from '@/features/auth';
 
 export function ThemeTab() {
   const { theme, setTheme } = useTheme();
+  const [updateProfile] = useUpdateProfileMutation();
+
+  const applyTheme = (value: 'light' | 'dark') => {
+    setTheme(value);
+    void updateProfile({
+      theme: value === 'dark' ? 'DARK' : 'LIGHT',
+    });
+  };
 
   return (
     <div className="max-w-3xl space-y-6 font-sans">
@@ -19,9 +28,8 @@ export function ThemeTab() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Light Theme Card */}
         <div
-          onClick={() => setTheme('light')}
+          onClick={() => applyTheme('light')}
           className={`bg-white border rounded-2xl p-5 cursor-pointer transition-all ${
             theme === 'light'
               ? 'border-[#18181B] ring-2 ring-[#18181B]/10 shadow-md'
@@ -51,9 +59,8 @@ export function ThemeTab() {
           </div>
         </div>
 
-        {/* Dark Theme Card */}
         <div
-          onClick={() => setTheme('dark')}
+          onClick={() => applyTheme('dark')}
           className={`bg-white border rounded-2xl p-5 cursor-pointer transition-all ${
             theme === 'dark'
               ? 'border-[#18181B] ring-2 ring-[#18181B]/10 shadow-md'

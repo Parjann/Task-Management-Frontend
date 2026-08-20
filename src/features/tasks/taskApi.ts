@@ -212,13 +212,14 @@ export const taskApi = baseApi.injectEndpoints({
       query: ({ taskId, body }) => ({
         url: `/tasks/${taskId}/comments`,
         method: 'POST',
-        body,
+        body: { content: body.content },
       }),
       transformResponse: (response: any): Comment => {
         return response?.comment || response?.data || response;
       },
       invalidatesTags: (_result, _error, { taskId }) => [
         { type: 'Comment', id: taskId },
+        { type: 'Task', id: taskId },
         { type: 'Activity', id: 'LIST' },
       ],
     }),
@@ -233,7 +234,12 @@ export const taskApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { id, taskId }) => [
         { type: 'Comment', id },
-        ...(taskId ? [{ type: 'Comment' as const, id: taskId }] : []),
+        ...(taskId
+          ? [
+              { type: 'Comment' as const, id: taskId },
+              { type: 'Task' as const, id: taskId },
+            ]
+          : []),
       ],
     }),
   }),

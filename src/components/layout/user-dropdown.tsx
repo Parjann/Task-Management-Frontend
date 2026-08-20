@@ -12,7 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useColorTheme, ColorMode } from '@/providers/color-theme-provider';
-import { useLogoutUserMutation } from '@/features/auth';
+import { useLogoutUserMutation, useUpdateProfileMutation } from '@/features/auth';
 
 interface UserDropdownProps {
   isOpen: boolean;
@@ -29,6 +29,7 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
   const { theme, setTheme } = useTheme();
   const { colorMode, setColorMode, accentColor } = useColorTheme();
   const [logoutUser] = useLogoutUserMutation();
+  const [updateProfile] = useUpdateProfileMutation();
 
   // Submenu state: 'theme' | 'color' | null
   const [activeSubmenu, setActiveSubmenu] = useState<'theme' | 'color' | null>(
@@ -37,11 +38,9 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
 
   if (!isOpen) return null;
 
-  const displayName = user?.name || 'Dexter';
-  const displayEmail = user?.email || 'Dexter@gmail.com';
-  const displayAvatar =
-    user?.avatarUrl ||
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face';
+  const displayName = user?.name || 'User';
+  const displayEmail = user?.email || '';
+  const displayAvatar = user?.avatarUrl;
 
   const colorOptions: { id: ColorMode; label: string; swatchBg: string }[] = [
     { id: 'amber', label: 'Amber', swatchBg: '#F59E0B' },
@@ -71,12 +70,18 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
       <div className="absolute top-16 left-3 z-50 w-56 bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-xl animate-in fade-in zoom-in-95 duration-100 select-none font-sans">
         {/* User Card Header matching Figma */}
         <div className="flex flex-col items-center text-center pb-4 border-b border-[#F3F4F6]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={displayAvatar}
-            alt={displayName}
-            className="w-12 h-12 rounded-full object-cover ring-2 ring-purple-100 mb-2"
-          />
+          {displayAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={displayAvatar}
+              alt={displayName}
+              className="w-12 h-12 rounded-full object-cover ring-2 ring-purple-100 mb-2"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#EC4899] text-white font-semibold flex items-center justify-center mb-2">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <h4 className="text-xs font-bold text-[#111827]">{displayName}</h4>
           <p className="text-[11px] text-[#9CA3AF] truncate max-w-full">
             {displayEmail}
@@ -117,7 +122,10 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
                 <div className="space-y-0.5">
                   <button
                     type="button"
-                    onClick={() => setTheme('light')}
+                    onClick={() => {
+                      setTheme('light');
+                      void updateProfile({ theme: 'LIGHT' });
+                    }}
                     className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
@@ -131,7 +139,10 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
 
                   <button
                     type="button"
-                    onClick={() => setTheme('dark')}
+                    onClick={() => {
+                      setTheme('dark');
+                      void updateProfile({ theme: 'DARK' });
+                    }}
                     className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
@@ -184,7 +195,10 @@ export function UserDropdown({ isOpen, onClose, user }: UserDropdownProps) {
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => setColorMode(opt.id)}
+                      onClick={() => {
+                        setColorMode(opt.id);
+                        void updateProfile({ accentColor: opt.swatchBg });
+                      }}
                       className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
                     >
                       <div className="flex items-center gap-2.5">

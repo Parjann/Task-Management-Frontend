@@ -19,6 +19,15 @@ export const COLOR_MAP: Record<ColorMode, { hex: string; name: string }> = {
   black: { hex: '#18181B', name: 'Black' },
 };
 
+export function colorModeFromHex(hex?: string | null): ColorMode | null {
+  if (!hex) return null;
+  const normalized = hex.trim().toUpperCase();
+  const match = (Object.entries(COLOR_MAP) as [ColorMode, { hex: string }][]).find(
+    ([, value]) => value.hex.toUpperCase() === normalized,
+  );
+  return match ? match[0] : null;
+}
+
 const ColorThemeContext = createContext<ColorThemeContextType>({
   colorMode: 'blue',
   setColorMode: () => {},

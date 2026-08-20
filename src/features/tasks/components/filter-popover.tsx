@@ -25,24 +25,7 @@ export function FilterPopover({
   onClose,
   filters,
   onFilterChange,
-  availableAssignees = [
-    {
-      id: 'Dexter',
-      name: 'Dexter',
-      avatarUrl:
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-    },
-    {
-      id: 'Carl Nuñez',
-      name: 'Carl Nuñez',
-      avatarUrl: null,
-    },
-    {
-      id: 'Admin',
-      name: 'Admin',
-      avatarUrl: null,
-    },
-  ],
+  availableAssignees = [],
 }: FilterPopoverProps) {
   if (!isOpen) return null;
 
@@ -90,7 +73,7 @@ export function FilterPopover({
       onFilterChange({
         priorities: [],
         statuses: [],
-        assignees: ['Dexter'],
+        assignees: [],
         quickPreset: 'my_tasks',
       });
     } else if (preset === 'high_priority') {

@@ -84,6 +84,18 @@ export const projectApi = baseApi.injectEndpoints({
         { type: 'ProjectMember', id: projectId },
       ],
     }),
+
+    leaveProject: builder.mutation<{ message: string }, string>({
+      query: (projectId) => ({
+        url: `/projects/${projectId}/members/me`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, projectId) => [
+        { type: 'Project', id: projectId },
+        { type: 'Project', id: 'LIST' },
+        { type: 'ProjectMember', id: projectId },
+      ],
+    }),
   }),
 });
 
@@ -94,4 +106,5 @@ export const {
   useUpdateProjectMutation,
   useDeleteProjectMutation,
   useGetProjectMembersQuery,
+  useLeaveProjectMutation,
 } = projectApi;
