@@ -11,6 +11,7 @@ import { TaskActionsMenu } from '@/features/tasks/components/task-actions-menu';
 interface ProjectCardProps {
   project: ProjectItem;
   visibleFields?: VisibleFields;
+  onEdit?: (project: ProjectItem) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -24,6 +25,7 @@ export function ProjectCard({
     status: false,
     reporter: false,
   },
+  onEdit,
   onDelete,
 }: ProjectCardProps) {
   const router = useRouter();
@@ -60,6 +62,7 @@ export function ProjectCard({
           <TaskActionsMenu
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
+            onEdit={() => onEdit?.(project)}
             onCopyLink={() =>
               navigator.clipboard.writeText(
                 `${window.location.origin}/projects/${project.id}`,

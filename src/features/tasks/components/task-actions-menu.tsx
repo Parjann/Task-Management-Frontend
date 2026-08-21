@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Copy, CheckCircle, CopyPlus, Trash2, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Copy, CheckCircle, CopyPlus, Trash2, Check, Pencil } from 'lucide-react';
 
 interface TaskActionsMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: () => void;
   onCopyLink?: () => void;
   onDuplicate?: () => void;
   onToggleComplete?: () => void;
@@ -18,6 +19,7 @@ interface TaskActionsMenuProps {
 export function TaskActionsMenu({
   isOpen,
   onClose,
+  onEdit,
   onCopyLink,
   onDuplicate,
   onToggleComplete,
@@ -81,22 +83,40 @@ export function TaskActionsMenu({
             : undefined
         }
       >
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
-            ) : (
-              <Copy className="w-3.5 h-3.5 text-[#9CA3AF]" />
-            )}
-            <span className={copied ? 'text-emerald-600 font-semibold' : ''}>
-              {copied ? 'Link Copied!' : 'Copy Link'}
-            </span>
-          </div>
-        </button>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onEdit();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] hover:text-[#111827] transition-colors"
+          >
+            <Pencil className="w-3.5 h-3.5 text-[#9CA3AF]" />
+            <span>Edit</span>
+          </button>
+        )}
+
+        {onCopyLink && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-[#9CA3AF]" />
+              )}
+              <span className={copied ? 'text-emerald-600 font-semibold' : ''}>
+                {copied ? 'Link Copied!' : 'Copy Link'}
+              </span>
+            </div>
+          </button>
+        )}
 
         {onToggleComplete && (
           <button
