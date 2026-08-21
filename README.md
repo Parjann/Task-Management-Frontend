@@ -1,104 +1,246 @@
 # 🚀 Task Management System – Frontend
 
-A modern, production-ready Task Management frontend built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **Redux Toolkit**, and **RTK Query**.
+A production-ready Task Management System frontend built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **Redux Toolkit**, and **RTK Query**.
 
-The application provides a clean and responsive interface for managing projects, tasks, team collaboration, notifications, and real-time updates while following modern React and Next.js best practices.
+The application provides a responsive interface for managing projects, tasks, subtasks, comments, labels, team collaboration, authentication, notifications, and user preferences.
+
+The frontend was implemented based on the provided Figma design with a focus on design fidelity, reusable components, responsive layouts, maintainable architecture, and API-driven state management.
 
 ---
 
-# 🌐 Live Demo
+# 🌐 Live Application
 
-Coming Soon
+### Production Frontend
+
+https://task-management-frontend-three-dusky.vercel.app
+
+### Production Backend API
+
+https://task-management-backend-d5pm.onrender.com
+
+### Swagger API Documentation
+
+https://task-management-backend-d5pm.onrender.com/api/docs
+
+---
+
+# 🔗 Related Repository
+
+The backend is maintained in a separate repository.
+
+### Frontend Repository
+
+https://github.com/Parjann/Task-Management-Frontend
+
+### Backend Repository
+
+https://github.com/Parjann/Task-Management-Backend
 
 ---
 
 # 🎨 Figma Design
 
-The frontend is being developed by following the provided **Figma design** as closely as possible with pixel-perfect implementation.
+The application UI was implemented based on the provided assessment Figma design.
+
+The implementation focuses on:
+
+- Layout fidelity
+- Typography
+- Spacing
+- Colors
+- Buttons and controls
+- Responsive behavior
+- Reusable UI components
+- Theme support
+- Interactive states
+- Authentication screens
+- Dashboard and task-management interfaces
 
 ---
 
-# ✨ Planned Features
+# ✨ Features
 
-## Authentication
+## 🔐 Authentication
 
-- JWT Authentication
-- Login
-- Register
+- Google Authentication using Firebase
 - Guest Login
-- Protected Routes
+- JWT-based authentication
+- Protected application routes
+- Persistent authentication state
+- Secure API authentication using Bearer tokens
 
 ---
 
-## Dashboard
+## 📊 Dashboard
 
-- Dashboard Overview
-- Statistics
-- Recent Activity
-- Quick Actions
-
----
-
-## Project Management
-
-- Project List
-- Create Project
-- Update Project
-- Delete Project
-- Project Members
-- Invitations
+- Dashboard overview
+- Project information
+- Task information
+- Activity information
+- Quick actions
+- Responsive dashboard layout
 
 ---
 
-## Task Management
+## 📁 Project Management
 
-- Kanban Board
-- Drag & Drop
-- Task Details
-- Labels
-- Due Dates
-- Priorities
-- Attachments
-- Comments
+- Create projects
+- View projects
+- Update projects
+- Delete projects
+- Project members
+- Project-specific task management
 
 ---
 
-## Notifications
+## ✅ Task Management
 
-- Real-Time Notifications
-- Push Notifications
-- Notification Center
+- Create tasks
+- View tasks
+- Update tasks
+- Delete tasks
+- Task status
+- Task priority
+- Assignees
+- Due dates
+- Search
+- Filtering
+- Kanban board
+- List view
+- Drag-and-drop task movement
+- Task details
 
 ---
 
-## User Settings
+## 📝 Subtasks
 
-- Profile
-- Theme Preferences
-- Accent Color
-- Account Settings
+- Create subtasks
+- Update subtasks
+- Delete subtasks
+- Track subtasks within tasks
+
+---
+
+## 🏷️ Labels
+
+- Task labels
+- Label-based filtering
+- Label management
+
+---
+
+## 💬 Comments
+
+- Add comments
+- View comments
+- Delete comments
+- Activity updates associated with comments
+
+---
+
+## 🔔 Notifications
+
+- Notification center
+- Notification state management
+- Firebase integration for push notifications
+
+---
+
+## 👤 User Settings
+
+- User profile
+- Theme preferences
+- Accent color preferences
+- Account settings
+
+---
+
+## 🎨 Theme Support
+
+The application supports theme preferences and persists the selected preference across page refreshes.
+
+---
+
+## 📱 Responsive Design
+
+The application is designed to work across:
+
+- Desktop
+- Laptop
+- Tablet
+- Mobile
+
+The layouts and reusable components adapt to different screen sizes while maintaining the visual structure of the provided Figma design.
 
 ---
 
 # ⚡ Tech Stack
 
 | Technology | Purpose |
-|------------|----------|
+|------------|---------|
 | Next.js 15 | React Framework |
+| App Router | Application Routing |
 | React 19 | UI Library |
-| TypeScript | Language |
+| TypeScript | Programming Language |
 | Tailwind CSS | Styling |
-| shadcn/ui | UI Components |
-| Redux Toolkit | State Management |
-| RTK Query | API Layer |
-| React Hook Form | Forms |
-| Zod | Validation |
+| Base UI / UI Components | Reusable Interface Components |
+| Redux Toolkit | Client State Management |
+| RTK Query | Server State & API Management |
+| React Hook Form | Form Management |
+| Zod | Schema Validation |
+| Firebase | Google Authentication & Push Notifications |
 | Socket.IO Client | Real-Time Communication |
 | Framer Motion | Animations |
 | Sonner | Toast Notifications |
 | DnD Kit | Drag & Drop |
-| Recharts | Charts |
-| Firebase | Push Notifications |
+| Recharts | Data Visualization |
+
+---
+
+# 🧠 State Management
+
+The application uses **Redux Toolkit** and **RTK Query** for state management.
+
+## Redux Toolkit
+
+Redux Toolkit is used for application-level client state such as:
+
+- Authentication state
+- UI state
+- User preferences
+- Application configuration
+- Other shared client-side state
+
+## RTK Query
+
+RTK Query is used for server state and API communication.
+
+It handles:
+
+- API requests
+- Loading states
+- Error states
+- Response caching
+- Automatic refetching
+- Cache invalidation
+- Authentication headers
+
+### API State Architecture
+
+```text
+React Components
+       │
+       ▼
+RTK Query Hooks
+       │
+       ▼
+API Endpoints
+       │
+       ▼
+NestJS REST API
+       │
+       ▼
+PostgreSQL
 
 ---
 
